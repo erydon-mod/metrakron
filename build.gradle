@@ -1,0 +1,138 @@
+plugins {
+    id 'dev.kikugie.loom-back-compat'
+}
+
+group = property('mod.group')
+version = property('mod.version')
+
+base {
+    archivesName = "metrakron-fabric-mc${sc.current.version}"
+}
+
+def requiredJava = sc.current.parsed >= '26.1'
+        ? JavaVersion.VERSION_25
+        : (sc.current.parsed >= '1.20.5' ? JavaVersion.VERSION_21 : JavaVersion.VERSION_17)
+def metrakronVersion = project.property('mod.version')
+def minecraftCompatibility = project.property('mod.mc_compat')
+def fabricLoaderVersion = project.property('deps.fabric_loader')
+def fabricLoaderCompatibility = ">=${fabricLoaderVersion}"
+
+repositories {
+    mavenCentral()
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    runs {
+        client {
+            name = "ERYDON Metrakron ${sc.current.version} Client"
+            runDir = rootProject.file("run/${sc.current.version}").absolutePath
+        }
+    }
+
+    mods {
+        metrakron {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+sourceSets {
+    test {
+        compileClasspath += sourceSets.client.output + sourceSets.client.compileClasspath
+        runtimeClasspath += sourceSets.client.output + sourceSets.client.runtimeClasspath
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${sc.current.version}"
+    if (sc.current.parsed < '26.1') {
+        mappings "net.fabricmc:yarn:${property('deps.yarn_mappings')}:v2"
+    }
+    modImplementation "net.fabricmc:fabric-loader:${fabricLoaderVersion}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${property('deps.fabric_api')}"
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+}
+
+tasks.named('processResources') {
+    inputs.property 'version', metrakronVersion
+    inputs.property 'minecraft', minecraftCompatibility
+    inputs.property 'java', requiredJava.majorVersion
+    inputs.property 'loader', fabricLoaderCompatibility
+
+    filesMatching('fabric.mod.json') {
+        expand version: metrakronVersion,
+                minecraft: minecraftCompatibility,
+                java: requiredJava.majorVersion,
+                loader: fabricLoaderCompatibility
+    }
+}
+
+tasks.named('processClientResources') {
+    inputs.property 'version', metrakronVersion
+    inputs.property 'minecraft', minecraftCompatibility
+    inputs.property 'java', requiredJava.majorVersion
+    inputs.property 'loader', fabricLoaderCompatibility
+
+    filesMatching('fabric.mod.json') {
+        expand version: metrakronVersion,
+                minecraft: minecraftCompatibility,
+                java: requiredJava.majorVersion,
+                loader: fabricLoaderCompatibility
+    }
+    filesMatching('metrakron.mixins.json') {
+        expand java: requiredJava.majorVersion
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = requiredJava.majorVersion as Integer
+    options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = requiredJava
+    targetCompatibility = requiredJava
+    toolchain.languageVersion = JavaLanguageVersion.of(requiredJava.majorVersion as Integer)
+    withSourcesJar()
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+tasks.named('jar') {
+    from(rootProject.file('LICENSE'))
+    from(rootProject.file('THIRD_PARTY_NOTICES.md'))
+    from(rootProject.file('ASSET_PROVENANCE.md'))
+    from(rootProject.file('LICENSES')) {
+        into 'LICENSES'
+        include 'CC-BY-SA-4.0.txt', 'OFL-1.1.txt'
+    }
+}
+
+tasks.register('smokeDevJar', Jar) {
+    group = 'verification'
+    description = 'Assembles a readable-name adapter for an isolated Loom smoke client.'
+    dependsOn tasks.named('clientClasses')
+    archiveClassifier = 'smoke-dev'
+    from sourceSets.main.output
+    from sourceSets.client.output
+}
+
+tasks.register('buildAndCollect', Copy) {
+    group = 'build'
+    description = 'Builds this Minecraft adapter and collects its remapped JAR.'
+    dependsOn loomx.modJar
+    from(loomx.modJar.flatMap { it.archiveFile })
+    into(rootProject.layout.buildDirectory.dir('adapters'))
+}

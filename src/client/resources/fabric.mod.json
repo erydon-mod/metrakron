@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "metrakron",
+  "version": "${version}",
+  "name": "ERYDON Metrakron",
+  "description": "An honest, self-measured loading timer with freeze-resistant desktop presentation where supported.",
+  "authors": [
+    "Oliver"
+  ],
+  "contact": {
+    "homepage": "https://erydon.co.uk",
+    "sources": "https://github.com/erydon-mod/metrakron",
+    "issues": "https://github.com/erydon-mod/metrakron/issues"
+  },
+  "license": [
+    "MIT",
+    "CC-BY-SA-4.0",
+    "OFL-1.1"
+  ],
+  "environment": "client",
+  "provides": [
+    "metrakron_universal_adapter"
+  ],
+  "entrypoints": {
+    "client": [
+      "com.oliver.metrakron.MetrakronClient"
+    ]
+  },
+  "mixins": [
+    "metrakron.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "${loader}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft}",
+    "java": ">=${java}"
+  }
+}

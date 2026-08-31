@@ -1,0 +1,12 @@
+{
+  "text.metrakron.learning": "LERNEN",
+  "text.metrakron.relearning": "LADEZEIT WIRD NEU GELERNT",
+  "text.metrakron.main_menu_in": "HAUPTMENÜ IN",
+  "text.metrakron.world_ready_in": "WELT BEREIT IN",
+  "text.metrakron.activity.startup_resources": "RESSOURCENLADEN · MODELLE · TEXTUREN · SCHRIFTEN",
+  "text.metrakron.activity.world_opening": "SPIELSTAND ÖFFNEN · LEVELDATEN · REGISTER · DATENPAKETE",
+  "text.metrakron.activity.world_data": "SERVERDATEN · REGISTER · TAGS · REZEPTE",
+  "text.metrakron.activity.world_generation": "SPAWN VORBEREITEN · CHUNKS · TERRAIN · LICHT",
+  "text.metrakron.activity.world_joining": "CLIENT-SYNC · CHUNKS · SPIELERSTATUS",
+  "text.metrakron.activity.world_first_frame": "ERSTER FRAME · CHUNK-MESHES · TEXTUREN · HUD"
+}

@@ -1,0 +1,16 @@
+.gradle/
+.idea/
+/versions/
+build/
+out/
+run/
+run-dev/
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db
+*.iml
+*.ipr
+*.iws
+hs_err_pid*
+replay_pid*

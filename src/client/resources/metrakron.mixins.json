@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.oliver.metrakron.mixin",
+  "compatibilityLevel": "JAVA_${java}",
+  "client": [
+    "SplashOverlayMixin",
+    "ReadyScreenMixin",
+    "WorldEntryMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

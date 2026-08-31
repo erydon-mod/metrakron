@@ -1,0 +1,260 @@
+import groovy.json.JsonOutput
+import java.security.MessageDigest
+import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.bundling.Zip
+import org.gradle.api.tasks.bundling.ZipEntryCompression
+
+plugins {
+    id 'dev.kikugie.stonecutter'
+}
+
+stonecutter.active('1.20.1') /* [SC] DO NOT EDIT */
+
+def supportedMinecraftVersions = ['1.18.2', '1.19.2', '1.19.4', '1.20.1', '1.20.4', '1.20.6', '1.21.1', '1.21.4', '1.21.8', '1.21.11', '26.1.2', '26.2']
+def javaByMinecraftVersion = [
+        '1.18.2': 17,
+        '1.19.2': 17,
+        '1.19.4': 17,
+        '1.20.1': 17,
+        '1.20.4': 17,
+        '1.20.6': 21,
+        '1.21.1': 21,
+        '1.21.4': 21,
+        '1.21.8': 21,
+        '1.21.11': 21,
+        '26.1.2': 25,
+        '26.2': 25
+]
+def loaderByMinecraftVersion = [
+        '1.18.2': '0.16.10',
+        '1.19.2': '0.16.10',
+        '1.19.4': '0.16.10',
+        '1.20.1': '0.16.10',
+        '1.20.4': '0.16.10',
+        '1.20.6': '0.16.10',
+        '1.21.1': '0.16.10',
+        '1.21.4': '0.16.10',
+        '1.21.8': '0.16.13',
+        '1.21.11': '0.17.3',
+        '26.1.2': '0.18.4',
+        '26.2': '0.19.3'
+]
+def minimumFabricLoader = '0.16.10'
+def metrakronVersion = '0.2.0'
+def pythonExecutable = providers.gradleProperty('metrakron.python')
+        .orElse(providers.environmentVariable('PYTHON'))
+        .getOrElse(System.getProperty('os.name', '').startsWith('Windows') ? 'python' : 'python3')
+def adapterDirectory = layout.buildDirectory.dir('universal/adapters')
+def metadataDirectory = layout.buildDirectory.dir('generated/universal')
+def smokeTargets = [
+        '1201': '1.20.1',
+        '12111': '1.21.11',
+        '262': '26.2'
+]
+
+tasks.register('cleanUniversalAdapters', Delete) {
+    delete adapterDirectory
+}
+
+gradle.projectsEvaluated {
+    supportedMinecraftVersions.each { minecraftVersion ->
+        project(":${minecraftVersion}").tasks.named('buildAndCollect') {
+            dependsOn rootProject.tasks.named('cleanUniversalAdapters')
+            into adapterDirectory
+        }
+    }
+}
+
+tasks.register('prepareUniversalMetadata') {
+    dependsOn supportedMinecraftVersions.collect { ":${it}:buildAndCollect" }
+    outputs.dir metadataDirectory
+
+    doLast {
+        File output = metadataDirectory.get().asFile
+        project.delete(output)
+        output.mkdirs()
+
+        List<Map<String, Object>> adapters = supportedMinecraftVersions.collect { minecraftVersion ->
+            String fileName = "metrakron-fabric-mc${minecraftVersion}-${metrakronVersion}.jar"
+            File adapter = adapterDirectory.get().file(fileName).asFile
+            if (!adapter.isFile()) {
+                throw new GradleException("Missing built Metrakron adapter ${adapter}")
+            }
+            byte[] digest = MessageDigest.getInstance('SHA-256').digest(adapter.bytes)
+            String sha256 = digest.collect { String.format('%02x', it & 0xff) }.join()
+            return [
+                    minecraft: minecraftVersion,
+                    java: javaByMinecraftVersion[minecraftVersion],
+                    loader: loaderByMinecraftVersion[minecraftVersion],
+                    file: "META-INF/jars/${fileName}",
+                    sha256: sha256
+            ]
+        }
+
+        Map<String, Object> outerMetadata = [
+                schemaVersion: 1,
+                id: 'metrakron_bundle',
+                version: metrakronVersion,
+                name: 'ERYDON Metrakron Universal Bundle',
+                description: 'One ERYDON Metrakron download containing the exact adapter for each tested Minecraft version.',
+                authors: ['Oliver'],
+                contact: [
+                        homepage: 'https://erydon.co.uk',
+                        sources: 'https://github.com/erydon-mod/metrakron',
+                        issues: 'https://github.com/erydon-mod/metrakron/issues'
+                ],
+                license: ['MIT', 'CC-BY-SA-4.0', 'OFL-1.1'],
+                environment: 'client',
+                jars: adapters.collect { [file: it.file] },
+                depends: [
+                        fabricloader: ">=${minimumFabricLoader}",
+                        minecraft: supportedMinecraftVersions,
+                        java: '>=17',
+                        metrakron_universal_adapter: metrakronVersion
+                ],
+                custom: [
+                        modmenu: [
+                                badges: ['library'],
+                                update_checker: false
+                        ]
+                ]
+        ]
+        Map<String, Object> adapterManifest = [
+                schemaVersion: 1,
+                metrakronVersion: metrakronVersion,
+                adapters: adapters
+        ]
+
+        new File(output, 'fabric.mod.json').setText(
+                JsonOutput.prettyPrint(JsonOutput.toJson(outerMetadata)) + '\n',
+                'UTF-8'
+        )
+        File manifestFile = new File(output, 'META-INF/metrakron/adapters.json')
+        manifestFile.parentFile.mkdirs()
+        manifestFile.setText(
+                JsonOutput.prettyPrint(JsonOutput.toJson(adapterManifest)) + '\n',
+                'UTF-8'
+        )
+    }
+}
+
+tasks.register('universalJar', Zip) {
+    group = 'build'
+    description = 'Builds one deterministic Metrakron JAR containing all tested adapters.'
+    dependsOn tasks.named('prepareUniversalMetadata')
+    archiveFileName = "metrakron-fabric-universal-${metrakronVersion}.jar"
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    entryCompression = ZipEntryCompression.STORED
+    metadataCharset = 'UTF-8'
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+
+    from(metadataDirectory)
+    from(layout.projectDirectory) {
+        include 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'ASSET_PROVENANCE.md'
+    }
+    from(layout.projectDirectory.dir('LICENSES')) {
+        into 'LICENSES'
+        include 'CC-BY-SA-4.0.txt', 'OFL-1.1.txt'
+    }
+    from(adapterDirectory) {
+        into 'META-INF/jars'
+        include '*.jar'
+    }
+}
+
+tasks.register('auditUniversalJar', Exec) {
+    group = 'verification'
+    description = 'Audits the universal bundle metadata, hashes, adapters, resources, and class versions.'
+    dependsOn tasks.named('universalJar')
+    commandLine(
+            pythonExecutable,
+            rootProject.file('tools/audit_universal.py'),
+            layout.buildDirectory.file(
+                    "libs/metrakron-fabric-universal-${metrakronVersion}.jar"
+            ).get().asFile
+    )
+}
+
+tasks.register('checkAdapters') {
+    group = 'verification'
+    description = 'Compiles and tests every advertised Minecraft adapter without packaging JARs.'
+    dependsOn supportedMinecraftVersions.collect { ":${it}:test" }
+}
+
+// Loom development clients use readable Minecraft names, while published Fabric
+// adapters use production names. These small, generated-only wrappers let the
+// finished nested-JAR layout run in an isolated Loom client without modifying the
+// published universal JAR or the user's normal Minecraft instances.
+smokeTargets.each { smokeKey, minecraftVersion ->
+    def smokeMetadataDirectory = layout.buildDirectory.dir("generated/smoke/${minecraftVersion}")
+    def prepareTask = tasks.register("prepareSmoke${smokeKey}Metadata") {
+        outputs.dir smokeMetadataDirectory
+
+        doLast {
+            File output = smokeMetadataDirectory.get().asFile
+            project.delete(output)
+            output.mkdirs()
+            List<Map<String, String>> jarEntries = supportedMinecraftVersions.collect { adapterVersion ->
+                [file: "META-INF/jars/metrakron-fabric-mc${adapterVersion}-${metrakronVersion}.jar"]
+            }
+            Map<String, Object> metadata = [
+                    schemaVersion: 1,
+                    id: 'metrakron_bundle',
+                    version: metrakronVersion,
+                    name: 'ERYDON Metrakron Universal Bundle (isolated smoke test)',
+                    environment: 'client',
+                    jars: jarEntries,
+                    depends: [
+                            fabricloader: ">=${minimumFabricLoader}",
+                            minecraft: supportedMinecraftVersions,
+                            java: '>=17',
+                            metrakron_universal_adapter: metrakronVersion
+                    ]
+            ]
+            new File(output, 'fabric.mod.json').setText(
+                    JsonOutput.prettyPrint(JsonOutput.toJson(metadata)) + '\n',
+                    'UTF-8'
+            )
+        }
+    }
+
+    tasks.register("smokeBundle${smokeKey}", Zip) {
+        group = 'verification'
+        description = "Builds an isolated development-mapped nested bundle for Minecraft ${minecraftVersion}."
+        dependsOn prepareTask
+        archiveFileName = "metrakron-smoke-mc${minecraftVersion}-${metrakronVersion}.jar"
+        destinationDirectory = layout.buildDirectory.dir('smoke-bundles')
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+        entryCompression = ZipEntryCompression.STORED
+        metadataCharset = 'UTF-8'
+        duplicatesStrategy = DuplicatesStrategy.FAIL
+        from(smokeMetadataDirectory)
+    }
+}
+
+gradle.projectsEvaluated {
+    smokeTargets.each { smokeKey, minecraftVersion ->
+        def adapterJar = project(":${minecraftVersion}").tasks.named('smokeDevJar')
+        tasks.named("smokeBundle${smokeKey}") {
+            dependsOn adapterJar
+            from(adapterJar.flatMap { it.archiveFile }) {
+                into 'META-INF/jars'
+                rename { "metrakron-fabric-mc${minecraftVersion}-${metrakronVersion}.jar" }
+            }
+        }
+
+        supportedMinecraftVersions.findAll { it != minecraftVersion }.each { adapterVersion ->
+            String fileName = "metrakron-fabric-mc${adapterVersion}-${metrakronVersion}.jar"
+            def buildAdapter = project(":${adapterVersion}").tasks.named('buildAndCollect')
+            tasks.named("smokeBundle${smokeKey}") {
+                dependsOn buildAdapter
+                from(adapterDirectory.map { it.file(fileName) }) {
+                    into 'META-INF/jars'
+                }
+            }
+        }
+    }
+}

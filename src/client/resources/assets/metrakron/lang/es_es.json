@@ -1,0 +1,12 @@
+{
+  "text.metrakron.learning": "APRENDIENDO",
+  "text.metrakron.relearning": "REAPRENDIENDO TIEMPO DE CARGA",
+  "text.metrakron.main_menu_in": "MENÚ PRINCIPAL EN",
+  "text.metrakron.world_ready_in": "MUNDO LISTO EN",
+  "text.metrakron.activity.startup_resources": "RECARGA DE RECURSOS · MODELOS · TEXTURAS · FUENTES",
+  "text.metrakron.activity.world_opening": "ABRIENDO PARTIDA · DATOS · REGISTROS · PAQUETES",
+  "text.metrakron.activity.world_data": "DATOS DEL SERVIDOR · REGISTROS · ETIQUETAS · RECETAS",
+  "text.metrakron.activity.world_generation": "PREPARANDO SPAWN · CHUNKS · TERRENO · ILUMINACIÓN",
+  "text.metrakron.activity.world_joining": "SINCRONIZACIÓN · CHUNKS · ESTADO DEL JUGADOR",
+  "text.metrakron.activity.world_first_frame": "PRIMER FOTOGRAMA · MALLAS DE CHUNKS · HUD"
+}
