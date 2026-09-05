@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import io
 import json
+import re
 import struct
 import sys
 import zipfile
@@ -27,7 +28,6 @@ EXPECTED = {
     "26.1.2": {"java": 25, "loader": "0.18.4"},
     "26.2": {"java": 25, "loader": "0.19.3"},
 }
-EXPECTED_VERSION = "0.2.0"
 OUTER_LOADER_MINIMUM = "0.16.10"
 JAVA_CLASS_MAJOR = {17: 61, 21: 65, 25: 69}
 FIXED_ZIP_TIME = (1980, 2, 1, 0, 0, 0)
@@ -144,7 +144,15 @@ def audit_adapter(
         }
 
 
-def audit(bundle_path: Path) -> dict:
+def project_version() -> str:
+    properties = Path(__file__).resolve().parents[1] / "stonecutter.properties.toml"
+    match = re.search(r'^mod\.version\s*=\s*"([^"]+)"\s*$', properties.read_text(encoding="utf-8"), re.MULTILINE)
+    require(match is not None, "Missing mod.version in stonecutter.properties.toml")
+    return match.group(1)
+
+
+def audit(bundle_path: Path, expected_version: str | None = None) -> dict:
+    expected_version = expected_version or project_version()
     require(bundle_path.is_file(), f"Bundle does not exist: {bundle_path}")
     with zipfile.ZipFile(bundle_path) as bundle:
         names = bundle.namelist()
@@ -164,7 +172,7 @@ def audit(bundle_path: Path) -> dict:
         manifest = json_entry(bundle, "META-INF/metrakron/adapters.json")
         version = metadata.get("version")
         require(metadata.get("id") == "metrakron_bundle", "Outer mod id is incorrect")
-        require(version == EXPECTED_VERSION, f"Outer version must be {EXPECTED_VERSION}")
+        require(version == expected_version, f"Outer version must be {expected_version}")
         require(metadata.get("contact") == EXPECTED_CONTACT, "Outer bundle has incomplete public contact links")
         require(manifest.get("metrakronVersion") == version, "Outer and manifest versions differ")
         require(metadata.get("depends", {}).get("minecraft") == list(EXPECTED), "Outer Minecraft union differs")
@@ -222,9 +230,10 @@ def audit(bundle_path: Path) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("bundle", type=Path)
+    parser.add_argument("--expected-version", help="Expected release version; defaults to the project version")
     args = parser.parse_args()
     try:
-        result = audit(args.bundle)
+        result = audit(args.bundle, args.expected_version)
     except (OSError, KeyError, ValueError, zipfile.BadZipFile, json.JSONDecodeError) as error:
         print(f"Universal bundle audit failed: {error}", file=sys.stderr)
         return 1

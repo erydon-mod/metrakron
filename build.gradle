@@ -134,5 +134,5 @@ tasks.register('buildAndCollect', Copy) {
     description = 'Builds this Minecraft adapter and collects its remapped JAR.'
     dependsOn loomx.modJar
     from(loomx.modJar.flatMap { it.archiveFile })
-    into(rootProject.layout.buildDirectory.dir('adapters'))
+    into(rootProject.layout.buildDirectory.dir("adapters/${sc.current.version}"))
 }

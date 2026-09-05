@@ -40,7 +40,13 @@ def loaderByMinecraftVersion = [
         '26.2': '0.19.3'
 ]
 def minimumFabricLoader = '0.16.10'
-def metrakronVersion = '0.2.0'
+// Keep the outer bundle, smoke bundles and audit on the adapters' release version.
+def versionMatch = providers.fileContents(layout.projectDirectory.file('stonecutter.properties.toml'))
+        .asText.get() =~ /(?m)^mod\.version\s*=\s*"([^"]+)"\s*$/
+if (!versionMatch.find()) {
+    throw new GradleException('Missing mod.version in stonecutter.properties.toml')
+}
+def metrakronVersion = versionMatch.group(1)
 def pythonExecutable = providers.gradleProperty('metrakron.python')
         .orElse(providers.environmentVariable('PYTHON'))
         .getOrElse(System.getProperty('os.name', '').startsWith('Windows') ? 'python' : 'python3')
@@ -51,6 +57,7 @@ def smokeTargets = [
         '12111': '1.21.11',
         '262': '26.2'
 ]
+def collectedAdapters = objects.fileCollection()
 
 tasks.register('cleanUniversalAdapters', Delete) {
     delete adapterDirectory
@@ -58,15 +65,29 @@ tasks.register('cleanUniversalAdapters', Delete) {
 
 gradle.projectsEvaluated {
     supportedMinecraftVersions.each { minecraftVersion ->
-        project(":${minecraftVersion}").tasks.named('buildAndCollect') {
+        def buildAdapter = project(":${minecraftVersion}").tasks.named('buildAndCollect') {
             dependsOn rootProject.tasks.named('cleanUniversalAdapters')
-            into adapterDirectory
+            // Each Copy task must own a distinct directory, including in a multi-bundle build.
+            into adapterDirectory.map { it.dir(minecraftVersion) }
+        }
+        String fileName = "metrakron-fabric-mc${minecraftVersion}-${metrakronVersion}.jar"
+        def collectedAdapter = buildAdapter.map { new File(it.destinationDir, fileName) }
+        collectedAdapters.from(collectedAdapter)
+        tasks.named('universalJar') {
+            from(collectedAdapter) {
+                into 'META-INF/jars'
+            }
         }
     }
 }
 
 tasks.register('prepareUniversalMetadata') {
-    dependsOn supportedMinecraftVersions.collect { ":${it}:buildAndCollect" }
+    inputs.files(collectedAdapters).withPropertyName('adapters')
+    inputs.property('metrakronVersion', metrakronVersion)
+    inputs.property('supportedMinecraftVersions', supportedMinecraftVersions)
+    inputs.property('javaByMinecraftVersion', javaByMinecraftVersion)
+    inputs.property('loaderByMinecraftVersion', loaderByMinecraftVersion)
+    inputs.property('minimumFabricLoader', minimumFabricLoader)
     outputs.dir metadataDirectory
 
     doLast {
@@ -76,7 +97,7 @@ tasks.register('prepareUniversalMetadata') {
 
         List<Map<String, Object>> adapters = supportedMinecraftVersions.collect { minecraftVersion ->
             String fileName = "metrakron-fabric-mc${minecraftVersion}-${metrakronVersion}.jar"
-            File adapter = adapterDirectory.get().file(fileName).asFile
+            File adapter = adapterDirectory.get().dir(minecraftVersion).file(fileName).asFile
             if (!adapter.isFile()) {
                 throw new GradleException("Missing built Metrakron adapter ${adapter}")
             }
@@ -158,10 +179,6 @@ tasks.register('universalJar', Zip) {
         into 'LICENSES'
         include 'CC-BY-SA-4.0.txt', 'OFL-1.1.txt'
     }
-    from(adapterDirectory) {
-        into 'META-INF/jars'
-        include '*.jar'
-    }
 }
 
 tasks.register('auditUniversalJar', Exec) {
@@ -173,13 +190,15 @@ tasks.register('auditUniversalJar', Exec) {
             rootProject.file('tools/audit_universal.py'),
             layout.buildDirectory.file(
                     "libs/metrakron-fabric-universal-${metrakronVersion}.jar"
-            ).get().asFile
+            ).get().asFile,
+            '--expected-version', metrakronVersion
     )
 }
 
 tasks.register('checkAdapters') {
     group = 'verification'
     description = 'Compiles and tests every advertised Minecraft adapter without packaging JARs.'
+    dependsOn 'checkBundleConfiguration'
     dependsOn supportedMinecraftVersions.collect { ":${it}:test" }
 }
 
@@ -190,6 +209,9 @@ tasks.register('checkAdapters') {
 smokeTargets.each { smokeKey, minecraftVersion ->
     def smokeMetadataDirectory = layout.buildDirectory.dir("generated/smoke/${minecraftVersion}")
     def prepareTask = tasks.register("prepareSmoke${smokeKey}Metadata") {
+        inputs.property('metrakronVersion', metrakronVersion)
+        inputs.property('supportedMinecraftVersions', supportedMinecraftVersions)
+        inputs.property('minimumFabricLoader', minimumFabricLoader)
         outputs.dir smokeMetadataDirectory
 
         doLast {
@@ -250,11 +272,72 @@ gradle.projectsEvaluated {
             String fileName = "metrakron-fabric-mc${adapterVersion}-${metrakronVersion}.jar"
             def buildAdapter = project(":${adapterVersion}").tasks.named('buildAndCollect')
             tasks.named("smokeBundle${smokeKey}") {
-                dependsOn buildAdapter
-                from(adapterDirectory.map { it.file(fileName) }) {
+                from(buildAdapter.map { new File(it.destinationDir, fileName) }) {
                     into 'META-INF/jars'
                 }
             }
+        }
+    }
+}
+
+// Inspect the configured producers and consumers only: this check never builds a JAR.
+// In particular, test the multi-smoke case that exposes overlapping Copy outputs.
+gradle.projectsEvaluated {
+    def collectors = supportedMinecraftVersions.collectEntries { minecraftVersion ->
+        [(minecraftVersion): project(":${minecraftVersion}").tasks.named('buildAndCollect').get()]
+    }
+    def adapterVersions = supportedMinecraftVersions.collectEntries { minecraftVersion ->
+        [(minecraftVersion): project(":${minecraftVersion}").version.toString()]
+    }
+    def smokeBundles = smokeTargets.collectEntries { smokeKey, minecraftVersion ->
+        [(minecraftVersion): tasks.named("smokeBundle${smokeKey}").get()]
+    }
+    def developmentJars = smokeTargets.values().collectEntries { minecraftVersion ->
+        [(minecraftVersion): project(":${minecraftVersion}").tasks.named('smokeDevJar').get()]
+    }
+    def universal = tasks.named('universalJar').get()
+    def metadata = tasks.named('prepareUniversalMetadata').get()
+    def auditTask = tasks.named('auditUniversalJar').get()
+
+    tasks.register('checkBundleConfiguration') {
+        group = 'verification'
+        description = 'Checks bundle dependency wiring and release versions without packaging any JARs.'
+        doLast {
+            def directories = collectors.values().collect { it.destinationDir.toPath().toAbsolutePath().normalize() }
+            directories.eachWithIndex { directory, index ->
+                directories.drop(index + 1).each { other ->
+                    if (directory.startsWith(other) || other.startsWith(directory)) {
+                        throw new GradleException("Adapter collection outputs overlap: ${directory} and ${other}")
+                    }
+                }
+            }
+            adapterVersions.each { minecraftVersion, adapterVersion ->
+                if (adapterVersion != metrakronVersion) {
+                    throw new GradleException("Minecraft ${minecraftVersion} version ${adapterVersion} differs from bundle ${metrakronVersion}")
+                }
+            }
+            [universal, metadata].each { consumer ->
+                def dependencies = consumer.taskDependencies.getDependencies(consumer)
+                if (!dependencies.containsAll(collectors.values())) {
+                    throw new GradleException("${consumer.path} is missing an adapter producer dependency")
+                }
+            }
+            smokeBundles.each { minecraftVersion, bundle ->
+                def dependencies = bundle.taskDependencies.getDependencies(bundle)
+                def expected = collectors.findAll { key, ignored -> key != minecraftVersion }.values().toList()
+                expected.add(developmentJars[minecraftVersion])
+                if (!dependencies.containsAll(expected)) {
+                    throw new GradleException("${bundle.path} is missing an adapter producer dependency")
+                }
+                if (bundle.archiveFileName.get() != "metrakron-smoke-mc${minecraftVersion}-${metrakronVersion}.jar") {
+                    throw new GradleException("${bundle.path} has a stale release version")
+                }
+            }
+            if (universal.archiveFileName.get() != "metrakron-fabric-universal-${metrakronVersion}.jar"
+                    || auditTask.commandLine.takeRight(2) != ['--expected-version', metrakronVersion]) {
+                throw new GradleException('Universal bundle and audit release versions differ')
+            }
+            logger.lifecycle("Bundle configuration verified: ${collectors.size()} separate adapter outputs, ${smokeBundles.size()} smoke bundles, release ${metrakronVersion}; no JARs built.")
         }
     }
 }
