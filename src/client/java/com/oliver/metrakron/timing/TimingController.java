@@ -17,14 +17,23 @@ public final class TimingController {
     private final BaselineStore baselines;
     private final LongSupplier nanoClock;
     private final StableFrameGate playableFrameGate = new StableFrameGate(PLAYABLE_HUD_FRAMES_REQUIRED);
+    private final boolean quickPlayRequested;
 
     private ActiveLoad active;
     private boolean startupFinished;
+    private String quickPlayFolderName;
+    private boolean quickPlayWorldOpening;
     private long nextSequence;
 
     public TimingController(Path baselineFile, LongSupplier nanoClock) {
+        this(baselineFile, nanoClock, QuickPlayLaunch.none());
+    }
+
+    public TimingController(Path baselineFile, LongSupplier nanoClock, QuickPlayLaunch launch) {
         this.baselines = new BaselineStore(baselineFile);
         this.nanoClock = nanoClock;
+        this.quickPlayRequested = launch.requested();
+        this.quickPlayFolderName = launch.folderName();
     }
 
     //? if >=26.1 {
@@ -36,17 +45,37 @@ public final class TimingController {
             return;
         }
 
-        ProfileFingerprint profile = EnvironmentFingerprint.capture(client);
+        ensureStartupStarted(EnvironmentFingerprint.capture(client));
+    }
+
+    synchronized void ensureStartupStarted(ProfileFingerprint profile) {
+        if (startupFinished || active != null) {
+            return;
+        }
+        String quickPlayKey = quickPlayFolderName == null ? null : worldKey(profile, quickPlayFolderName);
         active = new ActiveLoad(
-                LoadKind.STARTUP,
+                quickPlayRequested ? LoadKind.QUICK_PLAY : LoadKind.STARTUP,
                 ++nextSequence,
                 nanoClock.getAsLong(),
                 profile,
-                profile.id(),
-                "Game startup",
-                boxed(baselines.startupAverage(profile)),
-                LoadActivity.STARTUP_RESOURCES
+                quickPlayRequested ? quickPlayKey : profile.id(),
+                quickPlayRequested ? quickPlayFolderName : "Game startup",
+                quickPlayRequested
+                        ? (quickPlayKey == null ? null : boxed(baselines.quickPlayAverage(profile, quickPlayKey)))
+                        : boxed(baselines.startupAverage(profile)),
+                quickPlayRequested
+                        ? (quickPlayWorldOpening ? LoadActivity.WORLD_OPENING : LoadActivity.QUICK_PLAY_RESOURCES)
+                        : LoadActivity.STARTUP_RESOURCES
         );
+    }
+
+    /** A loading screen without a splash is not a completed Quick Play launch. */
+    public synchronized boolean finishStartupOnReadyScreen() {
+        if (active == null || active.kind != LoadKind.STARTUP) {
+            return false;
+        }
+        onTitleScreenRendered();
+        return true;
     }
 
     public synchronized void onTitleScreenRendered() {
@@ -59,13 +88,54 @@ public final class TimingController {
         startupFinished = true;
     }
 
+    public synchronized boolean cancelWorldLoad() {
+        if (active == null || active.kind == LoadKind.STARTUP) {
+            return false;
+        }
+        active = null;
+        playableFrameGate.reset();
+        startupFinished = true;
+        return true;
+    }
+
+    /** Observes the real save-open route, also resolving newer versions' bare Quick Play flag. */
+    public synchronized boolean noteQuickPlayWorldOpening(String folderName) {
+        if (!quickPlayRequested || startupFinished || folderName == null || folderName.isBlank()
+                || (active != null && active.kind != LoadKind.QUICK_PLAY)) {
+            return false;
+        }
+        quickPlayFolderName = folderName;
+        quickPlayWorldOpening = true;
+        if (active == null) {
+            return false;
+        }
+        String key = worldKey(active.profile, folderName);
+        active = new ActiveLoad(
+                active.kind,
+                active.sequence,
+                active.startedAtNanos,
+                active.profile,
+                key,
+                folderName,
+                boxed(baselines.quickPlayAverage(active.profile, key)),
+                LoadActivity.WORLD_OPENING
+        );
+        playableFrameGate.reset();
+        return true;
+    }
+
     //? if >=26.1 {
     /*public synchronized void startWorld(Minecraft client, String folderName, String displayName) {
     *///?} else {
     public synchronized void startWorld(MinecraftClient client, String folderName, String displayName) {
     //?}
-        ProfileFingerprint profile = EnvironmentFingerprint.capture(client);
-        String worldKey = profile.id() + ':' + EnvironmentFingerprint.shortSha256(folderName);
+        startWorld(EnvironmentFingerprint.capture(client), folderName, displayName);
+    }
+
+    synchronized void startWorld(ProfileFingerprint profile, String folderName, String displayName) {
+        String worldKey = worldKey(profile, folderName);
+        // A world-list click is a new manual attempt, even after an abandoned Quick Play.
+        startupFinished = true;
         playableFrameGate.reset();
         active = new ActiveLoad(
                 LoadKind.WORLD,
@@ -80,14 +150,14 @@ public final class TimingController {
     }
 
     public synchronized void noteBlockingScreen(LoadActivity activity) {
-        if (active != null && active.kind == LoadKind.WORLD) {
+        if (active != null && active.kind != LoadKind.STARTUP) {
             playableFrameGate.reset();
             updateActivity(activity);
         }
     }
 
     public synchronized void noteWorldActivity(LoadActivity activity) {
-        if (active != null && active.kind == LoadKind.WORLD) {
+        if (active != null && active.kind != LoadKind.STARTUP) {
             updateActivity(activity);
         }
     }
@@ -97,31 +167,49 @@ public final class TimingController {
     *///?} else {
     public synchronized boolean observeHudFrame(MinecraftClient client) {
     //?}
-        if (active == null || active.kind != LoadKind.WORLD) {
+        if (active == null || active.kind == LoadKind.STARTUP) {
             return false;
         }
 
         //? if >=26.2 {
         /*boolean playableFrame = client.level != null
                 && client.player != null
-                && client.gui.screen() == null;
+                && client.gui.screen() == null
+                && client.gui.overlay() == null;
         *///?} else if >=26.1 {
         /*boolean playableFrame = client.level != null
                 && client.player != null
-                && client.screen == null;
+                && client.screen == null
+                && client.getOverlay() == null;
         *///?} else {
         boolean playableFrame = client.world != null
                 && client.player != null
-                && client.currentScreen == null;
+                && client.currentScreen == null
+                && client.getOverlay() == null;
         //?}
+        return observeHudFrame(playableFrame);
+    }
+
+    synchronized boolean observeHudFrame(boolean playableFrame) {
+        if (active == null || active.kind == LoadKind.STARTUP) {
+            return false;
+        }
         if (!playableFrameGate.observe(playableFrame)) {
             return false;
         }
 
         long elapsedMillis = elapsedMillis(active);
-        baselines.recordWorld(active.profile, active.key, active.label, elapsedMillis);
+        if (active.kind == LoadKind.QUICK_PLAY) {
+            // Never mix an unresolved latest-world request with any other save's history.
+            if (active.key != null) {
+                baselines.recordQuickPlay(active.profile, active.key, active.label, elapsedMillis);
+            }
+        } else {
+            baselines.recordWorld(active.profile, active.key, active.label, elapsedMillis);
+        }
         active = null;
         playableFrameGate.reset();
+        startupFinished = true;
         return true;
     }
 
@@ -131,7 +219,7 @@ public final class TimingController {
         }
         return new LoadSnapshot(
                 true,
-                stage,
+                active.kind == LoadKind.QUICK_PLAY ? LoadStage.QUICK_PLAY : stage,
                 active.sequence,
                 elapsedMillis(active),
                 active.averageMillis,
@@ -155,7 +243,17 @@ public final class TimingController {
     }
 
     private static boolean stageMatchesActiveLoad(LoadStage stage, LoadKind kind) {
+        if (kind == LoadKind.QUICK_PLAY) {
+            return true;
+        }
+        if (stage == LoadStage.QUICK_PLAY) {
+            return false;
+        }
         return (stage == LoadStage.STARTUP) == (kind == LoadKind.STARTUP);
+    }
+
+    private static String worldKey(ProfileFingerprint profile, String folderName) {
+        return profile.id() + ':' + EnvironmentFingerprint.shortSha256(folderName);
     }
 
     private long elapsedMillis(ActiveLoad load) {
@@ -169,6 +267,7 @@ public final class TimingController {
 
     private enum LoadKind {
         STARTUP,
+        QUICK_PLAY,
         WORLD
     }
 

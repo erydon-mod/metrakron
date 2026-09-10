@@ -15,6 +15,7 @@ public record LoadSnapshot(
     private static LoadActivity defaultActivity(LoadStage stage) {
         return switch (stage) {
             case STARTUP -> LoadActivity.STARTUP_RESOURCES;
+            case QUICK_PLAY -> LoadActivity.QUICK_PLAY_RESOURCES;
             case WORLD_READING -> LoadActivity.WORLD_DATA;
             case WORLD_GENERATION -> LoadActivity.WORLD_GENERATION;
             case WORLD_JOINING -> LoadActivity.WORLD_JOINING;

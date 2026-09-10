@@ -55,6 +55,14 @@ between 1.18.2 and 26.2 is interchangeable.
 - Singleplayer timing begins when a world entry is played, remains visible
   through reading, generation, and joining screens, and ends only after three
   consecutive playable HUD frames.
+- Launcher singleplayer Quick Play (including CurseForge's world dropdown and
+  Modrinth's world shortcut) uses
+  one continuous timer from the first Mojang splash frame through three playable
+  HUD frames. It detects Minecraft's `--quickPlaySingleplayer` argument and keeps
+  its own history for each save, separate from menu startup and manual world loads.
+  Newer versions' bare Quick Play flag is resolved when Minecraft opens the save.
+  Detection is launcher-independent; multiplayer and Realms shortcuts are not
+  treated as singleplayer Quick Play.
 - Elapsed time is displayed to whole-second precision.
 - The clock uses Java's monotonic `System.nanoTime()` source. It never reads
   Minecraft's percentage, progress-bar value, elapsed time, estimated time, or
@@ -75,6 +83,11 @@ between 1.18.2 and 26.2 is interchangeable.
 - Startup history carries across modpack changes in the same game instance.
   World history carries across changes only for the same save folder.
 - Cancelled and incomplete loads are never added to the average.
+- The first Quick Play launch for a save learns the full duration; subsequent
+  launches use the latest three completed Quick Play runs for that same save.
+  Existing startup and manual-world measurements are preserved but are not used
+  to estimate this different loading route. Quick Play history also survives
+  modpack changes within the same game instance.
 
 Earlier single measurements are migrated into the rolling history. Timing data
 is local to the game instance at `config/metrakron/baselines.json`.
@@ -133,7 +146,9 @@ production-remapped universal JAR.
 
 ## Known compatibility edges
 
-The tested path covers vanilla/Fabric startup, the first usable menu,
-singleplayer world-list launches, vanilla's blocking world-data wait, all
-intervening screen types, and the first playable world frames. A mod with a
-completely custom world-launch route may need a small compatibility hook.
+The runtime-tested path covers vanilla/Fabric startup, the first usable menu,
+singleplayer world-list launches, vanilla's blocking world-data wait, intervening
+screens, and the first playable world frames. Launcher Quick Play has automated
+lifecycle/history tests and exact world-open hook checks against all 12 adapters;
+in-game launcher validation is still needed. A mod with a completely custom
+world-launch route may need a small compatibility hook.

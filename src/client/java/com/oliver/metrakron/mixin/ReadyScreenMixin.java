@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Ends startup on the first genuinely usable screen after the loading overlay is gone.
  * This also covers first-run accessibility screens and custom main menus.
+ * Direct Quick Play launches instead stay active until playable world frames.
  */
 @Mixin(Screen.class)
 abstract class ReadyScreenMixin {

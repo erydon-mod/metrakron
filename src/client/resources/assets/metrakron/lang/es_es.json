@@ -22,6 +22,7 @@
   "text.metrakron.main_menu_in": "MENÚ PRINCIPAL EN",
   "text.metrakron.world_ready_in": "MUNDO LISTO EN",
   "text.metrakron.activity.startup_resources": "RECARGA DE RECURSOS · MODELOS · TEXTURAS · FUENTES",
+  "text.metrakron.activity.quick_play_resources": "INICIO RÁPIDO · MODELOS · TEXTURAS · FUENTES",
   "text.metrakron.activity.world_opening": "ABRIENDO PARTIDA · DATOS · REGISTROS · PAQUETES",
   "text.metrakron.activity.world_data": "DATOS DEL SERVIDOR · REGISTROS · ETIQUETAS · RECETAS",
   "text.metrakron.activity.world_generation": "PREPARANDO SPAWN · CHUNKS · TERRENO · ILUMINACIÓN",

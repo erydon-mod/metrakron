@@ -22,6 +22,7 @@
   "text.metrakron.main_menu_in": "MAIN MENU IN",
   "text.metrakron.world_ready_in": "WORLD READY IN",
   "text.metrakron.activity.startup_resources": "RESOURCE RELOAD · MODELS · TEXTURES · FONTS",
+  "text.metrakron.activity.quick_play_resources": "QUICK PLAY · MODELS · TEXTURES · FONTS",
   "text.metrakron.activity.world_opening": "SAVE OPEN · LEVEL DATA · REGISTRIES · DATA PACKS",
   "text.metrakron.activity.world_data": "SERVER DATA · REGISTRIES · TAGS · RECIPES",
   "text.metrakron.activity.world_generation": "SPAWN PREP · CHUNKS · TERRAIN · LIGHTING",

@@ -97,7 +97,7 @@ class BaselineStoreTest {
                 7018L,
                 reloaded.worldAverage(stableProfile, "stable-profile:world-hash").orElseThrow()
         );
-        assertTrue(Files.readString(file).contains("\"schemaVersion\": 3"));
+        assertTrue(Files.readString(file).contains("\"schemaVersion\": 4"));
     }
 
     @Test
@@ -137,7 +137,7 @@ class BaselineStoreTest {
         );
 
         String migrated = Files.readString(file);
-        assertTrue(migrated.contains("\"schemaVersion\": 3"));
+        assertTrue(migrated.contains("\"schemaVersion\": 4"));
         assertTrue(migrated.contains("\"runs\""));
 
         store.recordStartup(stableProfile, 4534L);
@@ -186,5 +186,57 @@ class BaselineStoreTest {
                 store.worldAverage(changedProfile, "profile-b:world-one").orElseThrow()
         );
         assertFalse(store.worldAverage(changedProfile, "profile-b:world-two").isPresent());
+    }
+
+    @Test
+    void quickPlayKeepsItsOwnLatestThreeRunsAcrossProfileChanges() {
+        Path file = temporaryDirectory.resolve("quick-play.json");
+        ProfileFingerprint first = new ProfileFingerprint("first", "Original modpack");
+        ProfileFingerprint changed = new ProfileFingerprint("changed", "Updated modpack");
+        BaselineStore store = new BaselineStore(file);
+
+        store.recordStartup(first, 5_000L);
+        store.recordWorld(first, "first:save", "Save", 8_000L);
+        store.recordQuickPlay(first, "first:save", "Save", 10_000L);
+        store.recordQuickPlay(first, "first:save", "Save", 20_000L);
+        store.recordQuickPlay(changed, "changed:save", "Save", 30_000L);
+        store.recordQuickPlay(changed, "changed:save", "Save", 40_000L);
+        store.recordQuickPlay(changed, "changed:other", "Other", 90_000L);
+
+        BaselineStore reloaded = new BaselineStore(file);
+        assertEquals(30_000L, reloaded.quickPlayAverage(changed, "changed:save").orElseThrow());
+        assertEquals(90_000L, reloaded.quickPlayAverage(first, "first:other").orElseThrow());
+        assertFalse(reloaded.quickPlayAverage(first, "first:unplayed").isPresent());
+        assertEquals(5_000L, reloaded.startupAverage(changed).orElseThrow());
+        assertEquals(8_000L, reloaded.worldAverage(changed, "changed:save").orElseThrow());
+    }
+
+    @Test
+    void versionThreeHistoryIsPreservedWithoutGuessingQuickPlayDurations() throws IOException {
+        Path file = temporaryDirectory.resolve("version-three.json");
+        Files.writeString(file, """
+                {
+                  "schemaVersion": 3,
+                  "profiles": {"profile": {"summary": "Existing game"}},
+                  "startup": {"profile": {"runs": [
+                    {"milliseconds": 12000, "capturedAt": "2026-09-01T10:00:00Z", "label": "Game startup"}
+                  ]}},
+                  "worlds": {"profile:save": {"runs": [
+                    {"milliseconds": 18000, "capturedAt": "2026-09-01T10:02:00Z", "label": "Save"}
+                  ]}}
+                }
+                """, StandardCharsets.UTF_8);
+        ProfileFingerprint profile = new ProfileFingerprint("profile", "Existing game");
+        BaselineStore store = new BaselineStore(file);
+        assertFalse(store.quickPlayAverage(profile, "profile:save").isPresent());
+        assertEquals(12_000L, store.startupAverage(profile).orElseThrow());
+        assertEquals(18_000L, store.worldAverage(profile, "profile:save").orElseThrow());
+        store.recordQuickPlay(profile, "profile:save", "Save", 35_000L);
+
+        BaselineStore reloaded = new BaselineStore(file);
+        assertEquals(35_000L, reloaded.quickPlayAverage(profile, "profile:save").orElseThrow());
+        assertEquals(12_000L, reloaded.startupAverage(profile).orElseThrow());
+        assertEquals(18_000L, reloaded.worldAverage(profile, "profile:save").orElseThrow());
+        assertTrue(Files.readString(file).contains("\"schemaVersion\": 4"));
     }
 }

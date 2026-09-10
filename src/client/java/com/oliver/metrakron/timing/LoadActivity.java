@@ -5,6 +5,10 @@ public enum LoadActivity {
             "text.metrakron.activity.startup_resources",
             "RESOURCE RELOAD · MODELS · TEXTURES · FONTS"
     ),
+    QUICK_PLAY_RESOURCES(
+            "text.metrakron.activity.quick_play_resources",
+            "QUICK PLAY · MODELS · TEXTURES · FONTS"
+    ),
     WORLD_OPENING(
             "text.metrakron.activity.world_opening",
             "SAVE OPEN · LEVEL DATA · REGISTRIES · DATA PACKS"

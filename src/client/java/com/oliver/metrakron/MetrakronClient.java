@@ -4,6 +4,7 @@ import com.oliver.metrakron.overlay.DesktopOverlayBridge;
 import com.oliver.metrakron.timing.LoadActivity;
 import com.oliver.metrakron.timing.LoadSnapshot;
 import com.oliver.metrakron.timing.LoadStage;
+import com.oliver.metrakron.timing.QuickPlayLaunch;
 import com.oliver.metrakron.timing.TimingController;
 import com.oliver.metrakron.ui.MetrakronOverlayRenderer;
 import net.fabricmc.api.ClientModInitializer;
@@ -11,9 +12,11 @@ import net.fabricmc.api.ClientModInitializer;
 /*import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.resources.Identifier;
 *///?} else {
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -32,7 +35,9 @@ import net.minecraft.client.gui.screen.DownloadingTerrainScreen;
 import net.minecraft.client.gui.screen.LevelLoadingScreen;
 //?}
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.DisconnectedScreen;
 import net.minecraft.client.gui.screen.TitleScreen;
+import net.minecraft.client.gui.screen.world.SelectWorldScreen;
 //?}
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.loader.api.FabricLoader;
@@ -102,8 +107,15 @@ public final class MetrakronClient implements ClientModInitializer {
         }
 
         LoadSnapshot startup = controller.snapshot(LoadStage.STARTUP);
-        if (startup.active()) {
+        if (startup.active() && startup.stage() == LoadStage.STARTUP) {
             drawAndPublish(context, startup);
+            return;
+        }
+
+        if (screen instanceof SelectWorldScreen || screen instanceof DisconnectedScreen) {
+            if (controller.cancelWorldLoad()) {
+                DesktopOverlayBridge.hide();
+            }
             return;
         }
 
@@ -170,6 +182,20 @@ public final class MetrakronClient implements ClientModInitializer {
         DesktopOverlayBridge.hide();
     }
 
+    public static void quickPlayWorldOpening(String folderName) {
+        TimingController controller = timing();
+        if (controller.noteQuickPlayWorldOpening(folderName)) {
+            DesktopOverlayBridge.publish(
+                    controller.snapshot(LoadStage.WORLD_READING),
+                    //? if >=26.1 {
+                    /*Minecraft.getInstance().getWindow()
+                    *///?} else {
+                    MinecraftClient.getInstance().getWindow()
+                    //?}
+            );
+        }
+    }
+
     public static void finishStartupIfReady() {
         //? if >=26.2 {
         /*if (Minecraft.getInstance().gui.overlay() != null) {
@@ -184,8 +210,8 @@ public final class MetrakronClient implements ClientModInitializer {
             return;
         }
         //?}
-        if (timing().snapshot(LoadStage.STARTUP).active()) {
-            finishAtTitleScreen();
+        if (timing().finishStartupOnReadyScreen()) {
+            DesktopOverlayBridge.hide();
         }
     }
 
@@ -243,6 +269,7 @@ public final class MetrakronClient implements ClientModInitializer {
     private static LoadActivity activityForStage(LoadStage stage) {
         return switch (stage) {
             case STARTUP -> LoadActivity.STARTUP_RESOURCES;
+            case QUICK_PLAY -> LoadActivity.QUICK_PLAY_RESOURCES;
             case WORLD_READING -> LoadActivity.WORLD_DATA;
             case WORLD_GENERATION -> LoadActivity.WORLD_GENERATION;
             case WORLD_JOINING -> LoadActivity.WORLD_JOINING;
@@ -262,7 +289,13 @@ public final class MetrakronClient implements ClientModInitializer {
                         .getConfigDir()
                         .resolve(MOD_ID)
                         .resolve("baselines.json");
-                timing = new TimingController(baselineFile, System::nanoTime);
+                QuickPlayLaunch launch = QuickPlayLaunch.fromArguments(
+                        FabricLoader.getInstance().getLaunchArguments(true)
+                );
+                timing = new TimingController(baselineFile, System::nanoTime, launch);
+                if (launch.requested()) {
+                    LOGGER.info("Singleplayer Quick Play detected; timing splash through playable world frames");
+                }
             }
             return timing;
         }

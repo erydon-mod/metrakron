@@ -26,7 +26,8 @@ import java.util.TreeMap;
 final class BaselineStore {
     private static final int VOLATILE_PROFILE_SCHEMA_VERSION = 1;
     private static final int SINGLE_MARK_SCHEMA_VERSION = 2;
-    private static final int SCHEMA_VERSION = 3;
+    private static final int ROLLING_HISTORY_SCHEMA_VERSION = 3;
+    private static final int SCHEMA_VERSION = 4;
     private static final int MAX_COMPLETED_RUNS = 3;
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
@@ -48,9 +49,18 @@ final class BaselineStore {
 
     synchronized OptionalLong worldAverage(ProfileFingerprint profile, String worldKey) {
         upgradeProfile(profile);
+        return averageForWorld(data.worlds, worldKey);
+    }
+
+    synchronized OptionalLong quickPlayAverage(ProfileFingerprint profile, String worldKey) {
+        upgradeProfile(profile);
+        return averageForWorld(data.quickPlayWorlds, worldKey);
+    }
+
+    private static OptionalLong averageForWorld(Map<String, History> histories, String worldKey) {
         int separator = worldKey.indexOf(':');
         String worldSuffix = separator < 0 ? worldKey : worldKey.substring(separator);
-        List<History> matchingHistories = data.worlds.entrySet()
+        List<History> matchingHistories = histories.entrySet()
                 .stream()
                 .filter(entry -> entry.getKey().endsWith(worldSuffix))
                 .map(Map.Entry::getValue)
@@ -81,6 +91,20 @@ final class BaselineStore {
         write();
     }
 
+    synchronized void recordQuickPlay(
+            ProfileFingerprint profile,
+            String worldKey,
+            String worldLabel,
+            long milliseconds
+    ) {
+        upgradeProfileWithoutWriting(profile);
+        registerProfile(profile);
+        data.quickPlayWorlds
+                .computeIfAbsent(worldKey, ignored -> new History())
+                .record(milliseconds, worldLabel);
+        write();
+    }
+
     private boolean registerProfile(ProfileFingerprint profile) {
         if (data.profiles.containsKey(profile.id())) {
             return false;
@@ -106,6 +130,7 @@ final class BaselineStore {
 
         // Version 2 already uses the stable profile identity. Its single mark
         // was converted into a one-run History while the file was read.
+        // Version 3 histories remain separate from the new full Quick Play measurements.
         data.schemaVersion = SCHEMA_VERSION;
         return true;
     }
@@ -200,6 +225,7 @@ final class BaselineStore {
     private static boolean supportedSchema(int schemaVersion) {
         return schemaVersion == VOLATILE_PROFILE_SCHEMA_VERSION
                 || schemaVersion == SINGLE_MARK_SCHEMA_VERSION
+                || schemaVersion == ROLLING_HISTORY_SCHEMA_VERSION
                 || schemaVersion == SCHEMA_VERSION;
     }
 
@@ -275,11 +301,13 @@ final class BaselineStore {
         private Map<String, ProfileDetails> profiles = new TreeMap<>();
         private Map<String, History> startup = new TreeMap<>();
         private Map<String, History> worlds = new TreeMap<>();
+        private Map<String, History> quickPlayWorlds = new TreeMap<>();
 
         private void sanitize() {
             profiles = profiles == null ? new TreeMap<>() : new TreeMap<>(profiles);
             startup = sanitizeHistories(startup);
             worlds = sanitizeHistories(worlds);
+            quickPlayWorlds = sanitizeHistories(quickPlayWorlds);
         }
 
         private static Map<String, History> sanitizeHistories(Map<String, History> histories) {
@@ -302,7 +330,7 @@ final class BaselineStore {
 
     /**
      * The legacy fields allow Gson to read version 1/2 single-mark objects.
-     * They are cleared during sanitization, so version 3 writes only `runs`.
+     * They are cleared during sanitization, so current writes use only `runs`.
      */
     private static final class History {
         private List<Measurement> runs = new ArrayList<>();

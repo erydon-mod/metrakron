@@ -6,7 +6,8 @@
   "client": [
     "SplashOverlayMixin",
     "ReadyScreenMixin",
-    "WorldEntryMixin"
+    "WorldEntryMixin",
+    "QuickPlayWorldOpenMixin"
   ],
   "injectors": {
     "defaultRequire": 1
