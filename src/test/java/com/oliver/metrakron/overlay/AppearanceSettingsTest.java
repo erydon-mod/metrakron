@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class AppearanceSettingsTest {
     @TempDir Path directory;
     @Test void defaultsAndRoundTrip() throws Exception {
+        assertEquals(27, AppearanceSettings.Stone.values().length);
         Path file = directory.resolve("appearance.properties");
         assertEquals(AppearanceSettings.DEFAULT, AppearanceSettings.read(file));
         for (var stone : AppearanceSettings.Stone.values()) for (var font : AppearanceSettings.Typeface.values()) for (var metal : AppearanceSettings.Metal.values()) {
@@ -44,6 +45,7 @@ class AppearanceSettingsTest {
             java.awt.image.BufferedImage image;
             try (var input = getClass().getResourceAsStream(s.stoneResource())) { image = javax.imageio.ImageIO.read(input); }
             assertNotNull(image);
+            assertTrue(image.getWidth() >= 676 && image.getHeight() >= 270, stone + " must use a master crop");
             assertTrue((s.shadowColor() >>> 24) >= 230);
             double shadow = luminance(s.shadowColor());
             for (int color : new int[]{s.textColor(), s.accentColor()}) {

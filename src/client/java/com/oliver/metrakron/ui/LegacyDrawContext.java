@@ -18,6 +18,8 @@ public final class LegacyDrawContext {
         return MinecraftClient.getInstance().getWindow().getScaledWidth();
     }
 
+    public MatrixStack getMatrices() { return matrices; }
+
     public int getScaledWindowHeight() {
         return MinecraftClient.getInstance().getWindow().getScaledHeight();
     }

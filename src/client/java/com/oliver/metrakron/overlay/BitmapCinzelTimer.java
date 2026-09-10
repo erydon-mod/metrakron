@@ -100,7 +100,11 @@ final class BitmapCinzelTimer {
 
         float width = measure(value, scale, tracking);
         float startX = centerX - width / 2.0F;
-        draw(context, shadowAtlas, value, startX + 1.0F, topY + 1, scale, tracking);
+        Graphics2D shadowContext = (Graphics2D) context.create();
+        try {
+            shadowContext.translate(0.25, 0.25);
+            draw(shadowContext, shadowAtlas, value, startX, topY, scale, tracking);
+        } finally { shadowContext.dispose(); }
         draw(context, foregroundAtlas, value, startX, topY, scale, tracking);
     }
 

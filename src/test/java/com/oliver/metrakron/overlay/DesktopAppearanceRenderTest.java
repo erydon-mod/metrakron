@@ -11,8 +11,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class DesktopAppearanceRenderTest {
     @Test void paintsAllAppearancesWithoutOpeningAWindow() throws Exception {
-        int columns = AppearanceSettings.Stone.values().length;
-        BufferedImage sheet = new BufferedImage(432 * columns, 1152, BufferedImage.TYPE_INT_ARGB);
+        int columns = 5;
+        int cells = AppearanceSettings.Stone.values().length * AppearanceSettings.Typeface.values().length * AppearanceSettings.Metal.values().length;
+        BufferedImage sheet = new BufferedImage(432 * columns, ((cells + columns - 1) / columns) * 192, BufferedImage.TYPE_INT_ARGB);
         var panelClass = Class.forName("com.oliver.metrakron.overlay.DesktopOverlayMain$OverlayPanel");
         var constructor = panelClass.getDeclaredConstructor(); constructor.setAccessible(true);
         var apply = panelClass.getDeclaredMethod("apply", OverlayState.class, long.class); apply.setAccessible(true);
@@ -39,5 +40,8 @@ class DesktopAppearanceRenderTest {
         Path output = Path.of("build/reports/appearance-preview.png");
         Files.createDirectories(output.getParent());
         assertTrue(ImageIO.write(sheet, "png", output.toFile()));
+        // Compact first-page preview for checking full-size lettering without opening Minecraft.
+        assertTrue(ImageIO.write(sheet.getSubimage(0, 0, 2160, 1152), "png",
+                output.resolveSibling("appearance-stones-preview.png").toFile()));
     }
 }

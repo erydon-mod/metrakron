@@ -10,7 +10,7 @@ Metrakron does not depend on the ERYDON mod.
 ## Appearance
 
 With the matching **Mod Menu** installed, open **Mods → ERYDON Metrakron → Configure**.
-Choose original Nerium, Aganite, Glacium, Kelastrion, or Selenephos stone; classical Cinzel, clean Lato,
+Choose all 27 ERYDON gallery stones, with original Nerium as the default; classical Cinzel, clean Lato,
 or monospaced Space Mono type; and bronze or silver
 inlay. The preview updates immediately. Save applies the choices to future loads;
 Cancel or Escape discards edits, and Reset restores the original choices.

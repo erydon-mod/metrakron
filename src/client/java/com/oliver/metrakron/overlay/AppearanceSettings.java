@@ -7,7 +7,7 @@ import java.util.Properties;
 
 /** Presentation only: never included in timing histories or profile fingerprints. */
 public record AppearanceSettings(Stone stone, Typeface font, Metal metal) {
-    public enum Stone { NERIUM, AGANITE, GLACIUM, KELASTRION, SELENEPHOS }
+    public enum Stone { NERIUM, AGANITE, ATERZON, BOREALIS, BRECTITE, CALACATTUM, CHALSTROM, CHRYSONYX, ETRUSCUS, GELASTRUM, GLACIUM, HESPERION, IMPERIUM, KELASTRION, KYLORION, LATMION, LAURENTIUM, MIELONYX, NOXOPLIS, PORPHYROS, PORTORIUM, PSAMATHEON, ROSINIUM, SANGUENITE, SELENEPHOS, SOLISTRA, STRIATUS }
     public enum Typeface { CINZEL, LATO, SPACEMONO }
     public enum Metal { BRONZE, SILVER }
     public static final AppearanceSettings DEFAULT = new AppearanceSettings(Stone.NERIUM, Typeface.CINZEL, Metal.BRONZE);
@@ -20,7 +20,13 @@ public record AppearanceSettings(Stone stone, Typeface font, Metal metal) {
         return "/assets/metrakron/textures/gui/" + stone.name().toLowerCase(java.util.Locale.ROOT) + suffix;
     }
     // Original stone colours remain untouched. Opposing shadows protect text over veins.
-    public boolean darkText() { return stone == Stone.SELENEPHOS || stone == Stone.AGANITE || stone == Stone.GLACIUM; }
+    public boolean darkText() {
+        return switch (stone) {
+            case BRECTITE, CALACATTUM, GELASTRUM, GLACIUM, KYLORION, LATMION,
+                    MIELONYX, PSAMATHEON, ROSINIUM, SELENEPHOS, SOLISTRA, STRIATUS -> true;
+            default -> false;
+        };
+    }
     public int shadowColor() { return darkText() ? 0xEEFFFFFF : 0xEE000000; }
     public int textColor() { return darkText() ? 0xFF111111 : 0xFFFFFFFF; }
     public int accentColor() {

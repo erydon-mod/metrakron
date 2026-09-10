@@ -158,7 +158,29 @@ final class BitmapCinzelFont {
         float width = measure(value, scale, tracking);
         float startX = centerX - width / 2.0F;
         if (shadow) {
-            draw(context, value, startX + 1.0F, topY + 1, scale, tracking, AppearanceSettings.current().shadowColor());
+            // Translate after glyph rounding so every version retains a tight subpixel shadow.
+            //? if >=26.1 {
+            /*var pose = context.pose();
+            pose.pushMatrix();
+            pose.translate(0.25F, 0.25F);
+            *///?} else if >=1.21.6 {
+            /*var pose = context.getMatrices();
+            pose.pushMatrix();
+            pose.translate(0.25F, 0.25F);
+            *///?} else {
+            var pose = context.getMatrices();
+            pose.push();
+            pose.translate(0.25F, 0.25F, 0);
+            //?}
+            try {
+                draw(context, value, startX, topY, scale, tracking, AppearanceSettings.current().shadowColor());
+            } finally {
+                //? if >=1.21.6 {
+                /*pose.popMatrix();
+                *///?} else {
+                pose.pop();
+                //?}
+            }
         }
         draw(context, value, startX, topY, scale, tracking, color);
     }
@@ -173,7 +195,7 @@ final class BitmapCinzelFont {
             *///?}
             String value,
             float startX,
-            int topY,
+            float topY,
             float scale,
             float tracking,
             int color

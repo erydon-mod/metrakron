@@ -1,11 +1,12 @@
 # Asset provenance
 
-Appearance choices additionally bundle 960x384 centre crops of Oliver's ERYDON
-full-size stone masters: `aganite.png`, `glacium_master_1024.png`,
-`kelastrion master.png`, and `selenephos.png`, under CC BY-SA 4.0.
+Appearance choices include all 27 ERYDON gallery stones, using centre crops of
+Oliver's full-size stone masters under CC BY-SA 4.0. The complete source-to-output
+mapping is recorded in `tools/import_stone_panels.ps1`. New panels are 960x384,
+except Striatus (676x270), whose supplied master is 676x676.
 These preserve exact source pixels, without resizing, tinting, or embedded
 editing metadata. Regenerate with `tools/import_stone_panels.ps1 -MasterDirectory
-<full-size-master-folder>` on Windows. Aganite and Glacium use
+<full-size-master-folder>` on Windows. Most stones use
 `textures/gui/<stone>_panel.png`; Kelastrion
 and Selenephos use `textures/gui/<stone>_quiet_panel.png`. They are self-contained;
 the ERYDON mod is not required. Original Nerium remains the default, using its

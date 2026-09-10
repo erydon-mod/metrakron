@@ -478,8 +478,8 @@ public final class DesktopOverlayMain {
             context.setColor(new Color(appearance.shadowColor(), true));
             context.drawString(
                     DesktopOverlayLink.LABEL,
-                    x + 1,
-                    DesktopOverlayLink.LINK_BASELINE + 1
+                    x + 0.25F,
+                    DesktopOverlayLink.LINK_BASELINE + 0.25F
             );
             context.setColor(new Color(linkHovered ? appearance.textColor() : appearance.accentColor(), true));
             context.drawString(DesktopOverlayLink.LABEL, x, DesktopOverlayLink.LINK_BASELINE);
@@ -537,7 +537,7 @@ public final class DesktopOverlayMain {
             int x = (OverlayLayout.PANEL_WIDTH - metrics.stringWidth(value)) / 2;
             if (shadow) {
                 context.setColor(new Color(appearance.shadowColor(), true));
-                context.drawString(value, x + 1, baseline + 1);
+                context.drawString(value, x + 0.25F, baseline + 0.25F);
             }
             context.setColor(color);
             context.drawString(value, x, baseline);
