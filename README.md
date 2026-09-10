@@ -7,6 +7,22 @@ rejects versions Metrakron has not tested.
 
 Metrakron does not depend on the ERYDON mod.
 
+## Appearance
+
+With the matching **Mod Menu** installed, open **Mods → ERYDON Metrakron → Configure**.
+Choose original Nerium, Aganite, Glacium, Kelastrion, or Selenephos stone; classical Cinzel, clean Lato,
+or monospaced Space Mono type; and bronze or silver
+inlay. The preview updates immediately. Save applies the choices to future loads;
+Cancel or Escape discards edits, and Reset restores the original choices.
+Text colour and an opposing drop shadow are selected automatically for readability.
+Stones retain their original colours, with no tint or colour wash; veined stones
+remain available and original Nerium is the default.
+Mod Menu is optional; the timer still works without it.
+
+The countdown bar starts full and empties against Metrakron's own learned time,
+not Minecraft progress. During learning or overtime it remains empty, with the
+learning/relearning heading explaining why. Timer digits use fixed-width slots.
+
 Source and issue tracking are public at
 [`erydon-mod/metrakron`](https://github.com/erydon-mod/metrakron).
 

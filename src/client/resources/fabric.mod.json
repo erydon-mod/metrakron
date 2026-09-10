@@ -22,6 +22,7 @@
     "metrakron_universal_adapter"
   ],
   "entrypoints": {
+    "modmenu": ["com.oliver.metrakron.ui.MetrakronModMenu"],
     "client": [
       "com.oliver.metrakron.MetrakronClient"
     ]

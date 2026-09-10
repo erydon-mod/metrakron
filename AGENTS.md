@@ -48,8 +48,11 @@
 ## Working style
 
 - Keep the interface simple, readable, and ERYDON-like: compact upper-left
-  placement, a darkened nerium recessed centre, dimensional bronze trim, and
-  Cinzel for every line including the timer and observed activity line.
+  placement, original stone colours without a tint or colour wash, and
+  dimensional bronze or silver trim. Use the selected font consistently,
+  with distinct classical, sans-serif, and monospaced choices and tabular timer digits.
+  Keep original Nerium as the default; do not exclude veined stones. Select light
+  or dark text automatically and use a contrasting drop shadow for legibility.
 - Keep `en_us`, `de_de`, and `es_es` player text aligned.
 - Keep the exact Minecraft, Java, Fabric Loader, and Fabric API matrix
   synchronized across `settings.gradle`, `stonecutter.properties.toml`,

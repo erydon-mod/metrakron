@@ -5,6 +5,7 @@ import javax.swing.JComponent;
 import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
 import java.awt.Color;
+import java.awt.BasicStroke;
 import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -13,6 +14,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.MouseAdapter;
@@ -75,6 +77,9 @@ public final class DesktopOverlayMain {
         try {
             while (parent.isAlive()) {
                 try {
+                    Path appearanceFile = arguments.stateFile.getParent().resolve("appearance.properties");
+                    try { AppearanceSettings.preview(AppearanceSettings.read(appearanceFile)); }
+                    catch (IOException | IllegalArgumentException ignored) { /* Retain the last good appearance. */ }
                     if (Files.isRegularFile(arguments.stateFile)) {
                         OverlayState state = OverlayStateFile.read(arguments.stateFile);
                         if (state.sessionId().equals(arguments.sessionId)
@@ -259,12 +264,20 @@ public final class DesktopOverlayMain {
         private static final Color LINK = new Color(0xE2A12A);
         private static final Color LINK_HOVER = new Color(0xFFD474);
 
-        private final BufferedImage nerium = loadImage(NERIUM_RESOURCE);
-        private final Font cinzel = loadCinzel();
-        private final BitmapCinzelTimer bitmapTimer = BitmapCinzelTimer.load(
-                TIMER,
-                new Color(0, 0, 0, 176)
-        );
+        private AppearanceSettings appearance;
+        private BufferedImage nerium;
+        private Font cinzel;
+        private BitmapCinzelTimer bitmapTimer;
+
+        private void refreshAppearance() {
+            AppearanceSettings selected = AppearanceSettings.current();
+            if (selected.equals(appearance)) return;
+            appearance = selected;
+            nerium = loadImage(selected.stoneResource());
+            cinzel = loadCinzel();
+            bitmapTimer = BitmapCinzelTimer.load(selected.fontId(), new Color(selected.accentColor(), true),
+                    new Color(selected.shadowColor(), true));
+        }
 
         private OverlayState state;
         private long activeSequence = Long.MIN_VALUE;
@@ -330,13 +343,18 @@ public final class DesktopOverlayMain {
 
         @Override
         protected void paintComponent(Graphics graphics) {
+            refreshAppearance();
             RenderText renderText;
             long renderRevision;
+            long barElapsed;
+            Long barAverage;
             synchronized (this) {
                 if (state == null || !state.active()) {
                     return;
                 }
                 long elapsedMillis = elapsedMillis(System.nanoTime());
+                barElapsed = elapsedMillis;
+                barAverage = state.averageMillis();
                 renderText = new RenderText(
                         OverlayClock.isRelearning(elapsedMillis, state.averageMillis())
                                 ? state.relearningHeading()
@@ -370,9 +388,10 @@ public final class DesktopOverlayMain {
                         RenderingHints.VALUE_INTERPOLATION_BILINEAR
                 );
                 drawPanel(context);
-                drawCentered(context, renderText.heading, 18, 10.5F, 6.0F, TEXT, true);
+                drawCentered(context, renderText.heading, 18, 10.5F, 6.0F, new Color(appearance.textColor(), true), true);
                 if (bitmapTimer == null) {
-                    drawCentered(context, renderText.timer, 51, 25.0F, 15.0F, TIMER, true);
+                    drawCentered(context, renderText.timer, 51, 25.0F, 15.0F,
+                            new Color(appearance.accentColor(), true), true);
                 } else {
                     bitmapTimer.drawCentered(
                             context,
@@ -390,9 +409,13 @@ public final class DesktopOverlayMain {
                         DesktopOverlayLink.DETAIL_BASELINE,
                         7.5F,
                         4.5F,
-                        DETAIL,
+                        new Color(appearance.textColor(), true),
                         true
                 );
+                CountdownBar.draw((l, t, r, b, color) -> {
+                    context.setColor(new Color(color, true));
+                    context.fillRect(l, t, r - l, b - t);
+                }, 12, 57, OverlayLayout.PANEL_WIDTH - 24, barElapsed, barAverage, appearance);
                 drawLink(context);
             } finally {
                 context.dispose();
@@ -408,11 +431,11 @@ public final class DesktopOverlayMain {
             int height = DesktopOverlayLink.PANEL_HEIGHT;
 
             BronzeFrameStyle.draw((left, top, right, bottom, argb) -> {
-                context.setColor(new Color(argb, true));
+                context.setColor(new Color(appearance.metalColor(argb), true));
                 context.fillRect(left, top, right - left, bottom - top);
             }, 0, 0, width, height);
 
-            if (nerium != null && nerium.getWidth() >= 832 && nerium.getHeight() >= 592) {
+            if (nerium != null) {
                 int contentInset = BronzeFrameStyle.CONTENT_INSET;
                 context.drawImage(
                         nerium,
@@ -420,14 +443,14 @@ public final class DesktopOverlayMain {
                         contentInset,
                         width - contentInset,
                         height - contentInset,
-                        192,
-                        336,
-                        832,
-                        592,
+                        appearance.stone() == AppearanceSettings.Stone.NERIUM ? 192 : 0,
+                        appearance.stone() == AppearanceSettings.Stone.NERIUM ? 336 : 0,
+                        appearance.stone() == AppearanceSettings.Stone.NERIUM ? 832 : nerium.getWidth(),
+                        appearance.stone() == AppearanceSettings.Stone.NERIUM ? 592 : nerium.getHeight(),
                         null
                 );
             } else {
-                context.setColor(new Color(0x080807));
+                context.setColor(new Color(appearance.darkText() ? 0xF8F6F0 : 0x080807));
                 context.fillRect(
                         BronzeFrameStyle.CONTENT_INSET,
                         BronzeFrameStyle.CONTENT_INSET,
@@ -435,13 +458,6 @@ public final class DesktopOverlayMain {
                         height - BronzeFrameStyle.CONTENT_INSET * 2
                 );
             }
-            context.setColor(new Color(0, 0, 0, 154));
-            context.fillRect(
-                    BronzeFrameStyle.CONTENT_INSET,
-                    BronzeFrameStyle.CONTENT_INSET,
-                    width - BronzeFrameStyle.CONTENT_INSET * 2,
-                    height - BronzeFrameStyle.CONTENT_INSET * 2
-            );
         }
 
         private void drawLink(Graphics2D context) {
@@ -459,20 +475,23 @@ public final class DesktopOverlayMain {
             linkLeft = x;
             linkRight = x + textWidth;
 
-            context.setColor(new Color(0, 0, 0, 176));
+            context.setColor(new Color(appearance.shadowColor(), true));
             context.drawString(
                     DesktopOverlayLink.LABEL,
                     x + 1,
                     DesktopOverlayLink.LINK_BASELINE + 1
             );
-            context.setColor(linkHovered ? LINK_HOVER : LINK);
+            context.setColor(new Color(linkHovered ? appearance.textColor() : appearance.accentColor(), true));
             context.drawString(DesktopOverlayLink.LABEL, x, DesktopOverlayLink.LINK_BASELINE);
+            Stroke previousStroke = context.getStroke();
+            context.setStroke(new BasicStroke(0.25F));
             context.drawLine(
                     x,
                     DesktopOverlayLink.LINK_BASELINE + 2,
                     x + textWidth,
                     DesktopOverlayLink.LINK_BASELINE + 2
             );
+            context.setStroke(previousStroke);
         }
 
         private void updateLinkHover(int x, int y) {
@@ -517,7 +536,7 @@ public final class DesktopOverlayMain {
             FontMetrics metrics = context.getFontMetrics(font);
             int x = (OverlayLayout.PANEL_WIDTH - metrics.stringWidth(value)) / 2;
             if (shadow) {
-                context.setColor(new Color(0, 0, 0, 176));
+                context.setColor(new Color(appearance.shadowColor(), true));
                 context.drawString(value, x + 1, baseline + 1);
             }
             context.setColor(color);
@@ -579,7 +598,7 @@ public final class DesktopOverlayMain {
         }
 
         private static Font loadCinzel() {
-            try (InputStream input = DesktopOverlayMain.class.getResourceAsStream(CINZEL_RESOURCE)) {
+            try (InputStream input = DesktopOverlayMain.class.getResourceAsStream(CINZEL_RESOURCE.replace("cinzel", AppearanceSettings.current().fontId()))) {
                 if (input != null) {
                     return Font.createFont(Font.TRUETYPE_FONT, input);
                 }

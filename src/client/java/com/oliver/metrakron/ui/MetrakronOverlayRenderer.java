@@ -2,6 +2,8 @@ package com.oliver.metrakron.ui;
 
 import com.oliver.metrakron.MetrakronClient;
 import com.oliver.metrakron.overlay.BronzeFrameStyle;
+import com.oliver.metrakron.overlay.AppearanceSettings;
+import com.oliver.metrakron.overlay.CountdownBar;
 import com.oliver.metrakron.overlay.OverlayClock;
 import com.oliver.metrakron.overlay.OverlayLayout;
 import com.oliver.metrakron.timing.LoadSnapshot;
@@ -51,6 +53,8 @@ public final class MetrakronOverlayRenderer {
     private static boolean neriumFailureLogged;
     private static int initializationAttempts;
     private static long nextInitializationAttemptNanos;
+    private static AppearanceSettings loadedAppearance;
+    private static int stoneWidth = 1024, stoneHeight = 1024;
 
     private MetrakronOverlayRenderer() {
     }
@@ -82,6 +86,18 @@ public final class MetrakronOverlayRenderer {
         int width = Math.min(OverlayLayout.PANEL_WIDTH, screenWidth - OverlayLayout.MARGIN * 2);
         int x = OverlayLayout.MARGIN;
         int y = OverlayLayout.MARGIN;
+        drawAt(context, snapshot, x, y, width);
+    }
+
+    //? if >=26.1 {
+    /*public static void drawAt(GuiGraphicsExtractor context, LoadSnapshot snapshot, int x, int y, int width) {
+    *///?} else if >=1.20 {
+    public static void drawAt(DrawContext context, LoadSnapshot snapshot, int x, int y, int width) {
+    //?} else {
+    /*public static void drawAt(LegacyDrawContext context, LoadSnapshot snapshot, int x, int y, int width) {
+    *///?}
+        ensureInitialized();
+        AppearanceSettings style = AppearanceSettings.current();
         drawRecessedPanel(context, x, y, width, OverlayLayout.PANEL_HEIGHT);
 
         if (!BitmapCinzelFont.isReady()) {
@@ -98,7 +114,7 @@ public final class MetrakronOverlayRenderer {
                 textWidth,
                 0.22F,
                 0.40F,
-                TEXT,
+                style.textColor(),
                 true
         );
 
@@ -110,7 +126,7 @@ public final class MetrakronOverlayRenderer {
                 textWidth,
                 0.48F,
                 0.0F,
-                TIMER,
+                style.accentColor(),
                 true
         );
 
@@ -122,9 +138,10 @@ public final class MetrakronOverlayRenderer {
                 textWidth,
                 0.14F,
                 0.20F,
-                DETAIL,
+                style.textColor(),
                 true
         );
+        CountdownBar.draw(context::fill, x + 12, y + 56, width - 24, snapshot.elapsedMillis(), snapshot.averageMillis(), style);
     }
 
     //? if >=26.1 {
@@ -134,7 +151,8 @@ public final class MetrakronOverlayRenderer {
     //?} else {
     /*private static void drawRecessedPanel(LegacyDrawContext context, int x, int y, int width, int height) {
     *///?}
-        BronzeFrameStyle.draw(context::fill, x, y, width, height);
+        AppearanceSettings style = AppearanceSettings.current();
+        BronzeFrameStyle.draw((l, t, r, b, color) -> context.fill(l, t, r, b, style.metalColor(color)), x, y, width, height);
         int contentInset = BronzeFrameStyle.CONTENT_INSET;
         if (neriumTextureReady) {
             drawTexture(
@@ -144,12 +162,12 @@ public final class MetrakronOverlayRenderer {
                     y + contentInset,
                     width - contentInset * 2,
                     height - contentInset * 2,
-                    192.0F,
-                    336.0F,
-                    640,
-                    256,
-                    1024,
-                    1024
+                    style.stone() == AppearanceSettings.Stone.NERIUM ? 192.0F : 0.0F,
+                    style.stone() == AppearanceSettings.Stone.NERIUM ? 336.0F : 0.0F,
+                    style.stone() == AppearanceSettings.Stone.NERIUM ? 640 : stoneWidth,
+                    style.stone() == AppearanceSettings.Stone.NERIUM ? 256 : stoneHeight,
+                    stoneWidth,
+                    stoneHeight
             );
         } else {
             context.fill(
@@ -157,16 +175,9 @@ public final class MetrakronOverlayRenderer {
                     y + contentInset,
                     x + width - contentInset,
                     y + height - contentInset,
-                    0xFF080807
+                    style.darkText() ? 0xFFF8F6F0 : 0xFF080807
             );
         }
-        context.fill(
-                x + contentInset,
-                y + contentInset,
-                x + width - contentInset,
-                y + height - contentInset,
-                PANEL_SHADE
-        );
     }
 
     //? if >=26.1 {
@@ -180,11 +191,13 @@ public final class MetrakronOverlayRenderer {
         *///?} else {
         NativeImageBackedTexture texture = null;
         //?}
-        try (InputStream stream = MetrakronOverlayRenderer.class.getResourceAsStream(NERIUM_RESOURCE)) {
+        try (InputStream stream = MetrakronOverlayRenderer.class.getResourceAsStream(AppearanceSettings.current().stoneResource())) {
             if (stream == null) {
                 throw new IOException("Missing bundled resource " + NERIUM_RESOURCE);
             }
             image = NativeImage.read(stream);
+            stoneWidth = image.getWidth();
+            stoneHeight = image.getHeight();
             //? if >=26.1 {
             /*texture = createTexture("ERYDON Metrakron nerium panel", image);
             *///?} else {
@@ -217,6 +230,13 @@ public final class MetrakronOverlayRenderer {
     }
 
     private static void ensureInitialized() {
+        AppearanceSettings selected = AppearanceSettings.current();
+        if (!selected.equals(loadedAppearance)) {
+            loadedAppearance = selected;
+            neriumTextureReady = false;
+            initializationAttempts = 0;
+            nextInitializationAttemptNanos = 0;
+        }
         if (BitmapCinzelFont.isReady() && neriumTextureReady) {
             return;
         }
@@ -235,9 +255,7 @@ public final class MetrakronOverlayRenderer {
         *///?} else {
         MinecraftClient client = MinecraftClient.getInstance();
         //?}
-        if (!BitmapCinzelFont.isReady()) {
-            BitmapCinzelFont.initialize(client);
-        }
+        BitmapCinzelFont.initialize(client);
         if (!neriumTextureReady) {
             initializeNeriumTexture(client);
         }

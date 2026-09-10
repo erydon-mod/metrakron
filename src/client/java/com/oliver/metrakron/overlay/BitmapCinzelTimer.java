@@ -35,9 +35,13 @@ final class BitmapCinzelTimer {
     }
 
     static BitmapCinzelTimer load(Color foreground, Color shadow) {
+        return load("cinzel", foreground, shadow);
+    }
+
+    static BitmapCinzelTimer load(String fontId, Color foreground, Color shadow) {
         try (
-                InputStream imageInput = requiredResource(ATLAS_RESOURCE);
-                InputStream metricsInput = requiredResource(METRICS_RESOURCE)
+                InputStream imageInput = requiredResource(ATLAS_RESOURCE.replace("cinzel", fontId));
+                InputStream metricsInput = requiredResource(METRICS_RESOURCE.replace("cinzel", fontId))
         ) {
             BufferedImage sourceAtlas = ImageIO.read(imageInput);
             if (sourceAtlas == null) {

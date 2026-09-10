@@ -2,6 +2,7 @@ package com.oliver.metrakron.ui;
 
 import com.google.gson.Gson;
 import com.oliver.metrakron.MetrakronClient;
+import com.oliver.metrakron.overlay.AppearanceSettings;
 //? if >=26.1 {
 /*import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
@@ -54,6 +55,7 @@ final class BitmapCinzelFont {
     private static Atlas atlas;
     private static boolean ready;
     private static boolean failureLogged;
+    private static String loadedFont;
 
     private BitmapCinzelFont() {
     }
@@ -63,9 +65,12 @@ final class BitmapCinzelFont {
     *///?} else {
     static boolean initialize(MinecraftClient client) {
     //?}
-        if (ready) {
+        String selectedFont = AppearanceSettings.current().fontId();
+        if (ready && selectedFont.equals(loadedFont)) {
             return true;
         }
+        ready = false;
+        loadedFont = selectedFont;
 
         NativeImage image = null;
         //? if >=26.1 {
@@ -74,9 +79,9 @@ final class BitmapCinzelFont {
         NativeImageBackedTexture texture = null;
         //?}
         try (
-                InputStream metadataStream = requiredResource(ATLAS_JSON);
+                InputStream metadataStream = requiredResource(ATLAS_JSON.replace("cinzel", selectedFont));
                 InputStreamReader metadataReader = new InputStreamReader(metadataStream, StandardCharsets.UTF_8);
-                InputStream imageStream = requiredResource(ATLAS_PNG)
+                InputStream imageStream = requiredResource(ATLAS_PNG.replace("cinzel", selectedFont))
         ) {
             Atlas loadedAtlas = new Gson().fromJson(metadataReader, Atlas.class);
             image = NativeImage.read(imageStream);
@@ -153,7 +158,7 @@ final class BitmapCinzelFont {
         float width = measure(value, scale, tracking);
         float startX = centerX - width / 2.0F;
         if (shadow) {
-            draw(context, value, startX + 1.0F, topY + 1, scale, tracking, 0xB0000000);
+            draw(context, value, startX + 1.0F, topY + 1, scale, tracking, AppearanceSettings.current().shadowColor());
         }
         draw(context, value, startX, topY, scale, tracking, color);
     }

@@ -177,7 +177,7 @@ tasks.register('universalJar', Zip) {
     }
     from(layout.projectDirectory.dir('LICENSES')) {
         into 'LICENSES'
-        include 'CC-BY-SA-4.0.txt', 'OFL-1.1.txt'
+        include 'CC-BY-SA-4.0.txt', 'OFL-1.1.txt', 'Lato-OFL.txt', 'SpaceMono-OFL.txt'
     }
 }
 

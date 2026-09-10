@@ -1,5 +1,22 @@
 # Asset provenance
 
+Appearance choices additionally bundle unchanged ERYDON `textures/block/aganite_block.png`,
+`glacium_block.png`, `kelastrion_block.png`, and `selenephos_block.png` under
+CC BY-SA 4.0. Aganite and Glacium use `textures/gui/<stone>_panel.png`; Kelastrion
+and Selenephos use `textures/gui/<stone>_quiet_panel.png`. They are self-contained;
+the ERYDON mod is not required. Original Nerium remains the default, using its
+original high-resolution panel crop. All stones retain their colours without a
+tint or wash; an opposing text drop shadow provides separation from veins.
+
+Lato Regular is an unmodified font from `google/fonts`, `ofl/lato/Lato-Regular.ttf`,
+under SIL OFL 1.1 (see `LICENSES/Lato-OFL.txt`). Space Mono Regular is unmodified
+from `google/fonts`, `ofl/spacemono/SpaceMono-Regular.ttf`, also under SIL OFL 1.1
+(see `LICENSES/SpaceMono-OFL.txt`). All three fonts' generated atlases use equal
+digit advances for stable timers. Regenerate with
+`python tools/generate_cinzel_atlas.py cinzel` and
+`python tools/generate_cinzel_atlas.py lato`, and
+`python tools/generate_cinzel_atlas.py spacemono`.
+
 The interface deliberately reuses three assets from the public
 ERYDON source owned by Oliver:
 

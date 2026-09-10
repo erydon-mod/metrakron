@@ -49,6 +49,7 @@ public final class MetrakronClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        com.oliver.metrakron.ui.AppearanceConfig.load();
         timing();
         DesktopOverlayBridge.initialize(
                 FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)

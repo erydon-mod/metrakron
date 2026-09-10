@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import sys
 import json
 from pathlib import Path
 
@@ -68,6 +69,8 @@ def generate_timer_atlas() -> None:
                 "advance": round(float(font.getlength(character)), 3),
             }
         )
+
+    make_digits_tabular(prepared)
 
     x = TIMER_PADDING
     y = TIMER_PADDING
@@ -158,6 +161,7 @@ def main() -> None:
             }
         )
 
+    make_digits_tabular(prepared)
     x = PADDING
     y = PADDING
     row_height = 0
@@ -205,5 +209,22 @@ def main() -> None:
     generate_timer_atlas()
 
 
+def make_digits_tabular(glyphs):
+    digits = [g for g in glyphs if 48 <= g["codepoint"] <= 57]
+    advance = max(g["advance"] for g in digits)
+    for glyph in digits:
+        glyph["offsetX"] += round((advance - glyph["advance"]) / 2)
+        glyph["advance"] = advance
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        name = sys.argv[1]
+        if name not in ("cinzel", "lato", "spacemono"):
+            raise SystemExit("Expected cinzel, lato, or spacemono")
+        FONT_PATH = PROJECT_ROOT / f"src/client/resources/assets/metrakron/font/{name}.ttf"
+        PNG_PATH = OUTPUT_DIRECTORY / f"{name}_atlas.png"
+        JSON_PATH = OUTPUT_DIRECTORY / f"{name}_atlas.json"
+        TIMER_PNG_PATH = OUTPUT_DIRECTORY / f"{name}_timer_atlas.png"
+        TIMER_PROPERTIES_PATH = OUTPUT_DIRECTORY / f"{name}_timer_atlas.properties"
     main()
