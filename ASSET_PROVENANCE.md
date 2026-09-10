@@ -1,8 +1,12 @@
 # Asset provenance
 
-Appearance choices additionally bundle unchanged ERYDON `textures/block/aganite_block.png`,
-`glacium_block.png`, `kelastrion_block.png`, and `selenephos_block.png` under
-CC BY-SA 4.0. Aganite and Glacium use `textures/gui/<stone>_panel.png`; Kelastrion
+Appearance choices additionally bundle 960x384 centre crops of Oliver's ERYDON
+full-size stone masters: `aganite.png`, `glacium_master_1024.png`,
+`kelastrion master.png`, and `selenephos.png`, under CC BY-SA 4.0.
+These preserve exact source pixels, without resizing, tinting, or embedded
+editing metadata. Regenerate with `tools/import_stone_panels.ps1 -MasterDirectory
+<full-size-master-folder>` on Windows. Aganite and Glacium use
+`textures/gui/<stone>_panel.png`; Kelastrion
 and Selenephos use `textures/gui/<stone>_quiet_panel.png`. They are self-contained;
 the ERYDON mod is not required. Original Nerium remains the default, using its
 original high-resolution panel crop. All stones retain their colours without a
