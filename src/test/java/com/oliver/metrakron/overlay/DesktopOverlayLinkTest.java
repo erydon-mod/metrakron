@@ -16,7 +16,7 @@ class DesktopOverlayLinkTest {
         assertTrue(DesktopOverlayLink.isActivation(
                 MouseEvent.BUTTON1,
                 108,
-                83,
+                83 + OverlayLayout.LOGO_HEADER_HEIGHT,
                 OverlayLayout.PANEL_WIDTH,
                 DesktopOverlayLink.PANEL_HEIGHT,
                 LINK_LEFT,
@@ -25,7 +25,7 @@ class DesktopOverlayLinkTest {
         assertFalse(DesktopOverlayLink.isActivation(
                 MouseEvent.BUTTON3,
                 108,
-                83,
+                83 + OverlayLayout.LOGO_HEADER_HEIGHT,
                 OverlayLayout.PANEL_WIDTH,
                 DesktopOverlayLink.PANEL_HEIGHT,
                 LINK_LEFT,
@@ -34,7 +34,7 @@ class DesktopOverlayLinkTest {
         assertFalse(DesktopOverlayLink.isActivation(
                 MouseEvent.BUTTON1,
                 108,
-                70,
+                70 + OverlayLayout.LOGO_HEADER_HEIGHT,
                 OverlayLayout.PANEL_WIDTH,
                 DesktopOverlayLink.PANEL_HEIGHT,
                 LINK_LEFT,
@@ -46,7 +46,7 @@ class DesktopOverlayLinkTest {
     void mapsScaledDesktopCoordinatesBackToTheLogicalPanel() {
         assertTrue(DesktopOverlayLink.isPointerOver(
                 216,
-                166,
+                (83 + OverlayLayout.LOGO_HEADER_HEIGHT) * 2,
                 OverlayLayout.PANEL_WIDTH * 2,
                 DesktopOverlayLink.PANEL_HEIGHT * 2,
                 LINK_LEFT,
@@ -54,7 +54,7 @@ class DesktopOverlayLinkTest {
         ));
         assertFalse(DesktopOverlayLink.isPointerOver(
                 60,
-                166,
+                (83 + OverlayLayout.LOGO_HEADER_HEIGHT) * 2,
                 OverlayLayout.PANEL_WIDTH * 2,
                 DesktopOverlayLink.PANEL_HEIGHT * 2,
                 LINK_LEFT,

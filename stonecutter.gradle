@@ -69,6 +69,13 @@ gradle.projectsEvaluated {
             dependsOn rootProject.tasks.named('cleanUniversalAdapters')
             // Each Copy task must own a distinct directory, including in a multi-bundle build.
             into adapterDirectory.map { it.dir(minecraftVersion) }
+            inputs.file(rootProject.file('tools/strip_adapter_assets.py'))
+            doLast {
+                File collected = new File(destinationDir, "metrakron-fabric-mc${minecraftVersion}-${metrakronVersion}.jar")
+                providers.exec {
+                    commandLine pythonExecutable, rootProject.file('tools/strip_adapter_assets.py'), collected
+                }.result.get().assertNormalExitValue()
+            }
         }
         String fileName = "metrakron-fabric-mc${minecraftVersion}-${metrakronVersion}.jar"
         def collectedAdapter = buildAdapter.map { new File(it.destinationDir, fileName) }
@@ -117,6 +124,7 @@ tasks.register('prepareUniversalMetadata') {
                 id: 'metrakron_bundle',
                 version: metrakronVersion,
                 name: 'ERYDON Metrakron Universal Bundle',
+                icon: 'assets/metrakron/icon.png',
                 description: 'One ERYDON Metrakron download containing the exact adapter for each tested Minecraft version.',
                 authors: ['Oliver'],
                 contact: [
@@ -172,8 +180,11 @@ tasks.register('universalJar', Zip) {
     duplicatesStrategy = DuplicatesStrategy.FAIL
 
     from(metadataDirectory)
+    from(layout.projectDirectory.dir('src/client/resources')) {
+        include 'assets/**'
+    }
     from(layout.projectDirectory) {
-        include 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'ASSET_PROVENANCE.md'
+        include 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'ASSET_PROVENANCE.md', 'BRANDING.md'
     }
     from(layout.projectDirectory.dir('LICENSES')) {
         into 'LICENSES'
@@ -185,6 +196,7 @@ tasks.register('auditUniversalJar', Exec) {
     group = 'verification'
     description = 'Audits the universal bundle metadata, hashes, adapters, resources, and class versions.'
     dependsOn tasks.named('universalJar')
+    dependsOn 'verifySharedBundleAssets'
     commandLine(
             pythonExecutable,
             rootProject.file('tools/audit_universal.py'),
@@ -193,6 +205,21 @@ tasks.register('auditUniversalJar', Exec) {
             ).get().asFile,
             '--expected-version', metrakronVersion
     )
+}
+
+tasks.register('verifySharedBundleAssets', Exec) {
+    group = 'verification'
+    description = 'Loads shared assets and fonts through each isolated production adapter, without opening a window.'
+    dependsOn tasks.named('universalJar')
+    doFirst {
+        def launcher = project(':26.2').extensions.getByType(JavaToolchainService).launcherFor {
+            languageVersion = JavaLanguageVersion.of(25)
+        }.get()
+        commandLine launcher.executablePath.asFile,
+                '-Djava.awt.headless=true',
+                rootProject.file('tools/VerifySharedAssets.java'),
+                layout.buildDirectory.file("libs/metrakron-fabric-universal-${metrakronVersion}.jar").get().asFile
+    }
 }
 
 tasks.register('checkAdapters') {
@@ -254,6 +281,9 @@ smokeTargets.each { smokeKey, minecraftVersion ->
         metadataCharset = 'UTF-8'
         duplicatesStrategy = DuplicatesStrategy.FAIL
         from(smokeMetadataDirectory)
+        from(layout.projectDirectory.dir('src/client/resources')) {
+            include 'assets/**'
+        }
     }
 }
 

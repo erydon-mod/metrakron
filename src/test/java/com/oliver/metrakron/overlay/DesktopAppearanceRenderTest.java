@@ -12,8 +12,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class DesktopAppearanceRenderTest {
     @Test void paintsAllAppearancesWithoutOpeningAWindow() throws Exception {
         int columns = 5;
+        int cellHeight = DesktopOverlayLink.PANEL_HEIGHT * 2;
         int cells = AppearanceSettings.Stone.values().length * AppearanceSettings.Typeface.values().length * AppearanceSettings.Metal.values().length;
-        BufferedImage sheet = new BufferedImage(432 * columns, ((cells + columns - 1) / columns) * 192, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage sheet = new BufferedImage(432 * columns, ((cells + columns - 1) / columns) * cellHeight, BufferedImage.TYPE_INT_ARGB);
         var panelClass = Class.forName("com.oliver.metrakron.overlay.DesktopOverlayMain$OverlayPanel");
         var constructor = panelClass.getDeclaredConstructor(); constructor.setAccessible(true);
         var apply = panelClass.getDeclaredMethod("apply", OverlayState.class, long.class); apply.setAccessible(true);
@@ -25,13 +26,25 @@ class DesktopAppearanceRenderTest {
                     for (var font : AppearanceSettings.Typeface.values()) for (var metal : AppearanceSettings.Metal.values()) for (var stone : AppearanceSettings.Stone.values()) {
                         AppearanceSettings.preview(new AppearanceSettings(stone, font, metal));
                         JComponent panel = (JComponent) constructor.newInstance();
-                        panel.setSize(432, 192);
+                        panel.setSize(432, cellHeight);
                         apply.invoke(panel, new OverlayState(2, "test", 1, 1, true, 1, 12_000, 60_000L,
-                                "MAIN MENU IN", "RELEARNING LOAD TIME", "RESOURCE RELOAD · MODELS · TEXTURES · FONTS", 0, 0, 432, 192), System.nanoTime());
+                                "MAIN MENU IN", "RELEARNING LOAD TIME", "RESOURCE RELOAD · MODELS · TEXTURES · FONTS", 0, 0, 432, cellHeight), System.nanoTime());
                         var graphics = sheet.createGraphics();
-                        try { graphics.translate(cell % columns * 432, cell / columns * 192); panel.paint(graphics); }
+                        try { graphics.translate(cell % columns * 432, cell / columns * cellHeight); panel.paint(graphics); }
                         finally { graphics.dispose(); }
-                        assertNotEquals(0, sheet.getRGB(cell % columns * 432 + 20, cell / columns * 192 + 20));
+                        assertNotEquals(0, sheet.getRGB(cell % columns * 432 + 20, cell / columns * cellHeight + 20));
+                        if (font == AppearanceSettings.Typeface.CINZEL &&
+                                (stone == AppearanceSettings.Stone.NERIUM || stone == AppearanceSettings.Stone.PORTORIUM || stone == AppearanceSettings.Stone.GLACIUM)) {
+                            try {
+                                Path capture = Path.of("build/reports/marketing", stone.name().toLowerCase() + "-" + metal.name().toLowerCase() + ".png");
+                                Files.createDirectories(capture.getParent());
+                                panel.setSize(864, DesktopOverlayLink.PANEL_HEIGHT * 4);
+                                BufferedImage clean = new BufferedImage(864, DesktopOverlayLink.PANEL_HEIGHT * 4, BufferedImage.TYPE_INT_ARGB);
+                                var g = clean.createGraphics();
+                                try { panel.paint(g); } finally { g.dispose(); }
+                                ImageIO.write(clean, "png", capture.toFile());
+                            } catch (java.io.IOException e) { throw new RuntimeException(e); }
+                        }
                         cell++;
                     }
                 } catch (ReflectiveOperationException e) { throw new RuntimeException(e); }
@@ -41,7 +54,7 @@ class DesktopAppearanceRenderTest {
         Files.createDirectories(output.getParent());
         assertTrue(ImageIO.write(sheet, "png", output.toFile()));
         // Compact first-page preview for checking full-size lettering without opening Minecraft.
-        assertTrue(ImageIO.write(sheet.getSubimage(0, 0, 2160, 1152), "png",
+        assertTrue(ImageIO.write(sheet.getSubimage(0, 0, 2160, cellHeight * 6), "png",
                 output.resolveSibling("appearance-stones-preview.png").toFile()));
     }
 }

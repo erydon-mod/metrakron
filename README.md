@@ -7,16 +7,23 @@ rejects versions Metrakron has not tested.
 
 Metrakron does not depend on the ERYDON mod.
 
+The universal bundle stores the unchanged textures and fonts once, shared by all
+12 exact-version adapters. Keep the universal JAR intact: its small nested adapters
+are not standalone installs. The desktop helper loads its selected adapter together
+with the outer bundle to access those same assets.
+Only the small Mod Menu icon is retained locally in each adapter, because Mod Menu
+resolves icons within each mod's own container.
+
 ## Appearance
 
 With the matching **Mod Menu** installed, open **Mods → ERYDON Metrakron → Configure**.
-Choose all 27 ERYDON gallery stones, with original Nerium as the default; classical Cinzel, clean Lato,
+Choose all 27 ERYDON gallery stones, with pale Glacium as the default; classical Cinzel, clean Lato,
 or monospaced Space Mono type; and bronze or silver
 inlay. The preview updates immediately. Save applies the choices to future loads;
 Cancel or Escape discards edits, and Reset restores the original choices.
 Text colour and an opposing drop shadow are selected automatically for readability.
 Stones retain their original colours, with no tint or colour wash; veined stones
-remain available and original Nerium is the default.
+remain available and pale Glacium is the default.
 Mod Menu is optional; the timer still works without it.
 
 The countdown bar starts full and empties against Metrakron's own learned time,
@@ -28,7 +35,7 @@ Source and issue tracking are public at
 
 ## Install
 
-Install `metrakron-fabric-universal-0.2.0.jar` and the matching Fabric API for
+Install `metrakron-fabric-universal-1.0.0.jar` and the matching Fabric API for
 the game version. Do not install one of the internal adapter JARs separately.
 Metrakron follows the minimum Loader version already required by that Fabric
 API instead of forcing every older modpack onto the newest Loader.
@@ -115,10 +122,12 @@ copy of the selected internal adapter. Session-specific names prevent concurrent
 Minecraft clients from overwriting one another. They contain no Minecraft
 progress estimate.
 
-The compact interface uses a darkened nerium recessed centre, a burnished
-bronze inlay with directional top-left highlights, and Cinzel for the heading,
-timer, and activity line. A pre-baked Cinzel atlas makes the text available
-before Minecraft's own fonts.
+The loading interface places the animated Portorium logo above the timer on
+pale Glacium, with a bevelled edge and recessed polished bronze or silver inlay.
+The appearance screen uses matching Portorium controls. Both the independent
+window and the in-game fallback animate the logo; saved appearance choices are
+preserved. A pre-baked Cinzel atlas makes the text available before Minecraft's
+own fonts. The reflection loop is presentation only and never affects timing.
 
 ## Build and test
 
@@ -133,7 +142,7 @@ build the universal download and audit its metadata, nested hashes, resources,
 bytecode, and deterministic ZIP layout. Set `-Pmetrakron.python=<command>` if
 Python 3 is not available as the platform's normal `python` or `python3`
 command. The result is written to
-`build/libs/metrakron-fabric-universal-0.2.0.jar`.
+`build/libs/metrakron-fabric-universal-1.0.0.jar`.
 
 Disposable nested-bundle launch checks are available as
 `:smoke1201:runClient`, `:smoke12111:runClient`, and `:smoke262:runClient`.

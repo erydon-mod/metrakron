@@ -55,6 +55,20 @@ REQUIRED_INNER_ENTRIES = {
     "com/oliver/metrakron/MetrakronClient.class",
     "com/oliver/metrakron/mixin/ReadyScreenMixin.class",
     "com/oliver/metrakron/overlay/DesktopOverlayMain.class",
+    "com/oliver/metrakron/overlay/LogoAnimation.class",
+    "com/oliver/metrakron/overlay/PolishedFrame.class",
+    "com/oliver/metrakron/overlay/StoneCrop.class",
+    "com/oliver/metrakron/ui/PortoriumSurfaces.class",
+    "com/oliver/metrakron/ui/PortoriumLogo.class",
+    "assets/metrakron/textures/gui/portorium_logo.png",
+    "assets/metrakron/textures/gui/portorium_logo.png.mcmeta",
+    "assets/metrakron/textures/gui/portorium_control_background.png",
+    "assets/metrakron/textures/gui/portorium_control_background.png.mcmeta",
+    "assets/metrakron/textures/gui/portorium_control_frame.png",
+    "assets/metrakron/textures/gui/portorium_control_frame.png.mcmeta",
+    "assets/metrakron/textures/gui/portorium_control_frame_silver.png",
+    "assets/metrakron/textures/gui/portorium_control_frame_silver.png.mcmeta",
+
     "assets/metrakron/font/cinzel.ttf",
     "com/oliver/metrakron/ui/MetrakronModMenu.class",
     "com/oliver/metrakron/ui/AppearanceScreen.class",
@@ -133,14 +147,18 @@ def audit_adapter(
             f"{minecraft} adapter has non-deterministic ZIP timestamps",
         )
         names = set(listed_names)
-        missing = sorted(REQUIRED_INNER_ENTRIES - names)
+        missing = sorted({name for name in REQUIRED_INNER_ENTRIES if not name.startswith("assets/")} - names)
         require(not missing, f"{minecraft} adapter is missing: {', '.join(missing)}")
+        require(not any(name.startswith("assets/") for name in names),
+                f"{minecraft} duplicates shared assets")
         require(
             "com/oliver/metrakron/mixin/TitleScreenMixin.class" not in names,
             f"{minecraft} contains the retired title-only startup hook",
         )
 
         metadata = json_entry(adapter, "fabric.mod.json")
+        if metadata.get("icon"):
+            require(metadata["icon"] in names, f"{minecraft} has a missing local Mod Menu icon")
         require(metadata.get("id") == "metrakron", f"{minecraft} has the wrong mod id")
         require(metadata.get("version") == expected_version, f"{minecraft} has the wrong mod version")
         require(metadata.get("contact") == EXPECTED_CONTACT, f"{minecraft} has incomplete public contact links")
@@ -207,6 +225,13 @@ def audit(bundle_path: Path, expected_version: str | None = None) -> dict:
         )
         missing_legal = sorted(REQUIRED_LEGAL_ENTRIES - set(names))
         require(not missing_legal, f"Outer bundle is missing: {', '.join(missing_legal)}")
+        resource_root = Path(__file__).resolve().parents[1] / "src/client/resources"
+        expected_assets = {p.relative_to(resource_root).as_posix(): p
+                           for p in (resource_root / "assets").rglob("*") if p.is_file()}
+        actual_assets = {name for name in names if name.startswith("assets/") and not name.endswith("/")}
+        require(actual_assets == set(expected_assets), "Shared asset inventory differs from source")
+        for name, source in expected_assets.items():
+            require(bundle.read(name) == source.read_bytes(), f"Shared asset changed: {name}")
 
         metadata = json_entry(bundle, "fabric.mod.json")
         manifest = json_entry(bundle, "META-INF/metrakron/adapters.json")

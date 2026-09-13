@@ -32,6 +32,9 @@ public final class AppearanceScreen extends Screen {
     private AppearanceSettings draft;
     private boolean saved;
     private boolean saveFailed;
+    private record Control(int x, int y, int width, java.util.function.BooleanSupplier focused,
+                           java.util.function.Supplier<String> text) { }
+    private final java.util.List<Control> controls = new java.util.ArrayList<>();
     private final java.util.List<Runnable> refreshLabels = new java.util.ArrayList<>();
 
     public AppearanceScreen(Screen parent) {
@@ -43,8 +46,10 @@ public final class AppearanceScreen extends Screen {
 
     @Override protected void init() {
         refreshLabels.clear();
+        controls.clear();
         int x = width / 2 - 108;
-        int y = Math.max(8, (height - 226) / 2) + 103;
+        int header = PortoriumLogo.headerHeight(height);
+        int y = Math.max(8, (height - 226 - header) / 2) + header + 103;
         button(x, y, 216, "stone", () -> {
             var values = AppearanceSettings.Stone.values();
             draft = new AppearanceSettings(values[(draft.stone().ordinal() + 1) % values.length], draft.font(), draft.metal());
@@ -80,6 +85,7 @@ public final class AppearanceScreen extends Screen {
         addDrawableChild(widget);
         *///?}
         refreshLabels.add(() -> widget.setMessage(label(key)));
+        controls.add(new Control(x, y, w, widget::isFocused, () -> widget.getMessage().getString()));
     }
 
     private void changed(String key, Runnable action) {
@@ -112,14 +118,16 @@ public final class AppearanceScreen extends Screen {
     /*@Override public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         LegacyDrawContext context = new LegacyDrawContext(matrices);
     *///?}
-        int top = Math.max(8, (height - 226) / 2);
+        int header = PortoriumLogo.headerHeight(height);
+        int top = Math.max(8, (height - 226 - header) / 2);
         context.fill(0, 0, width, height, 0xFF101011);
-        BronzeFrameStyle.draw((l, t, r, b, color) -> context.fill(l, t, r, b, draft.metalColor(color)), width / 2 - 116, top - 5, 232, 233);
-        context.fill(width / 2 - 111, top, width / 2 + 111, top + 223, 0xFF161617);
-        MetrakronOverlayRenderer.drawAt(context,
+        PortoriumSurfaces.panel(context, width / 2 - 116, top - 5, 232, 233 + header,
+                draft.metal() == AppearanceSettings.Metal.SILVER);
+        PortoriumLogo.draw(context, width / 2, top, header);
+        MetrakronOverlayRenderer.drawPreviewAt(context,
                 new LoadSnapshot(true, LoadStage.STARTUP, 1, 15_000, 60_000L, LoadActivity.STARTUP_RESOURCES),
-                width / 2 - 108, top + 18, 216);
-        BitmapCinzelFont.drawCentered(context, title.getString(), width / 2, top + 1, 216, .23F, 0, 0xFFF7F0E4, false);
+                width / 2 - 108, top + header + 18, 216);
+        BitmapCinzelFont.drawCentered(context, title.getString(), width / 2 + (header == 0 ? 8 : 0), top + header + 1, header == 0 ? 184 : 216, .23F, 0, 0xFF1F1F1F, false);
         //? if >=26.1 {
         /*super.extractRenderState(context, mouseX, mouseY, delta);
         *///?} else if >=1.20 {
@@ -127,6 +135,14 @@ public final class AppearanceScreen extends Screen {
         //?} else {
         /*super.render(matrices, mouseX, mouseY, delta);
         *///?}
+        for (Control control : controls) {
+            boolean hovered = mouseX >= control.x && mouseX < control.x + control.width
+                    && mouseY >= control.y && mouseY < control.y + 20;
+            PortoriumSurfaces.button(context, control.x, control.y, control.width,
+                    hovered || control.focused.getAsBoolean(), draft.metal() == AppearanceSettings.Metal.SILVER);
+            BitmapCinzelFont.drawCentered(context, control.text.get(), control.x + control.width / 2,
+                    control.y + 4, control.width - 14, .20F, 0, 0xFFF8F3E8, false);
+        }
     }
 
     //? if >=26.1 {

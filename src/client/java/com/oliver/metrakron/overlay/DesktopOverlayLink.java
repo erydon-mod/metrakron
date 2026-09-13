@@ -9,11 +9,11 @@ final class DesktopOverlayLink {
     static final String LABEL = "erydon.co.uk";
     static final URI TARGET = URI.create("https://erydon.co.uk");
 
-    static final int PANEL_HEIGHT = 96;
-    static final int DETAIL_BASELINE = 70;
-    static final int LINK_BASELINE = 84;
-    static final int LINK_HIT_TOP = 76;
-    static final int LINK_HIT_BOTTOM = 90;
+    static final int PANEL_HEIGHT = 96 + OverlayLayout.LOGO_HEADER_HEIGHT;
+    static final int DETAIL_BASELINE = 70 + OverlayLayout.LOGO_HEADER_HEIGHT;
+    static final int LINK_BASELINE = 84 + OverlayLayout.LOGO_HEADER_HEIGHT;
+    static final int LINK_HIT_TOP = 76 + OverlayLayout.LOGO_HEADER_HEIGHT;
+    static final int LINK_HIT_BOTTOM = 90 + OverlayLayout.LOGO_HEADER_HEIGHT;
     static final int LINK_HORIZONTAL_PADDING = 4;
 
     private DesktopOverlayLink() {

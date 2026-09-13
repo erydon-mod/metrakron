@@ -6,20 +6,20 @@ package com.oliver.metrakron.overlay;
 public final class BronzeFrameStyle {
     public static final int CONTENT_INSET = 5;
 
-    public static final int OUTER_GROOVE = 0xFF160A05;
-    public static final int METAL_BASE = 0xFF98602A;
-    public static final int TOP_EDGE = 0xFFD9B170;
-    public static final int LEFT_EDGE = 0xFFC18440;
-    public static final int BOTTOM_EDGE = 0xFF5A2C12;
-    public static final int RIGHT_EDGE = 0xFF3B1A0A;
-    public static final int INNER_TOP = 0xFF5F3217;
-    public static final int INNER_LEFT = 0xFF6E3B1A;
-    public static final int INNER_BOTTOM = 0xFFA7682F;
-    public static final int INNER_RIGHT = 0xFF744019;
-    public static final int TOP_GLINT = 0xFFF2D99F;
-    public static final int LEFT_GLINT = 0xFFE1B76F;
-    public static final int INNER_GROOVE = 0xFF100704;
-    public static final int INNER_REFLECTION = 0xFF70421E;
+    public static final int OUTER_GROOVE = 0xFF100F0B;
+    public static final int METAL_BASE = 0xFFC2A06A;
+    public static final int TOP_EDGE = 0xFFEAD9B1;
+    public static final int LEFT_EDGE = 0xFFCAB381;
+    public static final int BOTTOM_EDGE = 0xFF957140;
+    public static final int RIGHT_EDGE = 0xFF6E522F;
+    public static final int INNER_TOP = 0xFF41331F;
+    public static final int INNER_LEFT = 0xFF574329;
+    public static final int INNER_BOTTOM = 0xFFEFDCA9;
+    public static final int INNER_RIGHT = 0xFFD0B580;
+    public static final int TOP_GLINT = 0xFFFFF1CD;
+    public static final int LEFT_GLINT = 0xFFF0DFB8;
+    public static final int INNER_GROOVE = 0xFF0A0906;
+    public static final int INNER_REFLECTION = 0xFFA18B61;
 
     private BronzeFrameStyle() {
     }
@@ -39,7 +39,7 @@ public final class BronzeFrameStyle {
         fill.accept(x + 1, y + height - 2, x + width - 1, y + height - 1, BOTTOM_EDGE);
         fill.accept(x + width - 2, y + 1, x + width - 1, y + height - 1, RIGHT_EDGE);
 
-        // The second falloff gives the narrow strip a rounded, burnished surface.
+        // The second falloff gives the narrow strip a polished chamfer.
         fill.accept(x + 3, y + 3, x + width - 3, y + 4, INNER_TOP);
         fill.accept(x + 3, y + 3, x + 4, y + height - 3, INNER_LEFT);
         fill.accept(x + 3, y + height - 4, x + width - 3, y + height - 3, INNER_BOTTOM);
@@ -61,7 +61,7 @@ public final class BronzeFrameStyle {
                 LEFT_GLINT
         );
 
-        // Reversed inner shading makes the nerium centre read as a true recess.
+        // Reversed inner shading makes the stone centre read as a true recess.
         fill.accept(x + 4, y + 4, x + width - 4, y + height - 4, INNER_GROOVE);
         fill.accept(
                 x + 4,

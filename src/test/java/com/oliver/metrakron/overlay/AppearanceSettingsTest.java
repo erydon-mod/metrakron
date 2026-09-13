@@ -20,7 +20,7 @@ class AppearanceSettingsTest {
             try (var input = getClass().getResourceAsStream(settings.stoneResource())) { assertNotNull(input); }
         }
         Files.writeString(file, "stone=INVALID\nfont=missing\nmetal=SILVER\n");
-        assertEquals(AppearanceSettings.Stone.NERIUM, AppearanceSettings.read(file).stone());
+        assertEquals(AppearanceSettings.Stone.GLACIUM, AppearanceSettings.read(file).stone());
         assertEquals(AppearanceSettings.Metal.SILVER, AppearanceSettings.read(file).metal());
     }
     @Test void countdownUsesOnlyOwnEstimateAndClamps() {

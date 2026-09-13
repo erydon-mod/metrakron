@@ -1,16 +1,34 @@
 # Asset provenance
 
+The Portorium logo and emblem use Oliver's photograph of real Portoro marble,
+upscaled with GPT, then mapped onto the approved Blender plaques. The metal,
+Cinzel SemiBold lettering and reflection loop were rendered from geometry with
+Codex assistance. This is an upscale of an owned photograph, not a newly
+generated stone texture (confirmed by Oliver on 13 September 2026). The PNG
+exports retain the approved texture crops; see `BRANDING.md` for placement.
+Cinzel lettering is a rendered image, under the same OFL font attribution as
+the existing Cinzel assets. Oliver-owned branding remains CC BY-SA 4.0.
+
+The Portorium control background and replacement `portorium_panel.png` use the
+approved owned Portoro photograph, resampled to 1024x1024. They are an exception
+to the unresized gallery crops below and must be retained when regenerating those
+crops. The transparent `portorium_control_frame.png` is the authored ERYDON
+control chamfer and recessed polished bronze inlay; the silver variant applies
+the shared silver palette while preserving its alpha and geometry. Both loading
+renderers and the appearance panel reuse this frame. These assets remain
+CC BY-SA 4.0.
+
 Appearance choices include all 27 ERYDON gallery stones, using centre crops of
 Oliver's full-size stone masters under CC BY-SA 4.0. The complete source-to-output
-mapping is recorded in `tools/import_stone_panels.ps1`. New panels are 960x384,
+mapping is recorded in `tools/import_stone_panels.ps1`. Most panels are 960x384,
 except Striatus (676x270), whose supplied master is 676x676.
-These preserve exact source pixels, without resizing, tinting, or embedded
+These gallery crops preserve exact source pixels, without resizing, tinting, or embedded
 editing metadata. Regenerate with `tools/import_stone_panels.ps1 -MasterDirectory
 <full-size-master-folder>` on Windows. Most stones use
 `textures/gui/<stone>_panel.png`; Kelastrion
 and Selenephos use `textures/gui/<stone>_quiet_panel.png`. They are self-contained;
-the ERYDON mod is not required. Original Nerium remains the default, using its
-original high-resolution panel crop. All stones retain their colours without a
+the ERYDON mod is not required. Pale Glacium is the default; saved choices are
+preserved. Original Nerium retains its original high-resolution panel crop. All stones retain their colours without a
 tint or wash; an opposing text drop shadow provides separation from veins.
 
 Lato Regular is an unmodified font from `google/fonts`, `ofl/lato/Lato-Regular.ttf`,

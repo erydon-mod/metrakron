@@ -10,7 +10,7 @@ public record AppearanceSettings(Stone stone, Typeface font, Metal metal) {
     public enum Stone { NERIUM, AGANITE, ATERZON, BOREALIS, BRECTITE, CALACATTUM, CHALSTROM, CHRYSONYX, ETRUSCUS, GELASTRUM, GLACIUM, HESPERION, IMPERIUM, KELASTRION, KYLORION, LATMION, LAURENTIUM, MIELONYX, NOXOPLIS, PORPHYROS, PORTORIUM, PSAMATHEON, ROSINIUM, SANGUENITE, SELENEPHOS, SOLISTRA, STRIATUS }
     public enum Typeface { CINZEL, LATO, SPACEMONO }
     public enum Metal { BRONZE, SILVER }
-    public static final AppearanceSettings DEFAULT = new AppearanceSettings(Stone.NERIUM, Typeface.CINZEL, Metal.BRONZE);
+    public static final AppearanceSettings DEFAULT = new AppearanceSettings(Stone.GLACIUM, Typeface.CINZEL, Metal.BRONZE);
     private static volatile AppearanceSettings current = DEFAULT;
     public static AppearanceSettings current() { return current; }
     public static void preview(AppearanceSettings settings) { current = settings; }
@@ -31,7 +31,7 @@ public record AppearanceSettings(Stone stone, Typeface font, Metal metal) {
     public int textColor() { return darkText() ? 0xFF111111 : 0xFFFFFFFF; }
     public int accentColor() {
         if (darkText()) return 0xFF302618;
-        return metal == Metal.SILVER ? 0xFFE2E8ED : 0xFFFFC65A;
+        return metal == Metal.SILVER ? 0xFFE2E8ED : 0xFFE6CCA0;
     }
     public int metalColor(int bronze) {
         if (metal == Metal.BRONZE) return bronze;

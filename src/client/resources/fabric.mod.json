@@ -3,6 +3,7 @@
   "id": "metrakron",
   "version": "${version}",
   "name": "ERYDON Metrakron",
+  "icon": "assets/metrakron/icon.png",
   "description": "An honest, self-measured loading timer with freeze-resistant desktop presentation where supported.",
   "authors": [
     "Oliver"

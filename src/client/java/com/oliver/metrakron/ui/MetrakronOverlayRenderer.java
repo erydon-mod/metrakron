@@ -6,6 +6,7 @@ import com.oliver.metrakron.overlay.AppearanceSettings;
 import com.oliver.metrakron.overlay.CountdownBar;
 import com.oliver.metrakron.overlay.OverlayClock;
 import com.oliver.metrakron.overlay.OverlayLayout;
+import com.oliver.metrakron.overlay.StoneCrop;
 import com.oliver.metrakron.timing.LoadSnapshot;
 //? if >=26.1 {
 /*import com.mojang.blaze3d.platform.NativeImage;
@@ -79,14 +80,15 @@ public final class MetrakronOverlayRenderer {
         int screenWidth = context.getScaledWindowWidth();
         int screenHeight = context.getScaledWindowHeight();
         //?}
-        if (screenWidth < 96 || screenHeight < OverlayLayout.PANEL_HEIGHT + OverlayLayout.MARGIN * 2) {
+        if (screenWidth < 96 || screenHeight < OverlayLayout.CONTENT_HEIGHT + OverlayLayout.MARGIN * 2) {
             return;
         }
 
         int width = Math.min(OverlayLayout.PANEL_WIDTH, screenWidth - OverlayLayout.MARGIN * 2);
         int x = OverlayLayout.MARGIN;
         int y = OverlayLayout.MARGIN;
-        drawAt(context, snapshot, x, y, width);
+        if (screenHeight >= OverlayLayout.PANEL_HEIGHT + OverlayLayout.MARGIN * 2) drawAt(context, snapshot, x, y, width);
+        else drawPreviewAt(context, snapshot, x, y, width);
     }
 
     //? if >=26.1 {
@@ -96,9 +98,33 @@ public final class MetrakronOverlayRenderer {
     //?} else {
     /*public static void drawAt(LegacyDrawContext context, LoadSnapshot snapshot, int x, int y, int width) {
     *///?}
+        drawContent(context, snapshot, x, y, width, true);
+    }
+
+    //? if >=26.1 {
+    /*public static void drawPreviewAt(GuiGraphicsExtractor context, LoadSnapshot snapshot, int x, int y, int width) {
+    *///?} else if >=1.20 {
+    public static void drawPreviewAt(DrawContext context, LoadSnapshot snapshot, int x, int y, int width) {
+    //?} else {
+    /*public static void drawPreviewAt(LegacyDrawContext context, LoadSnapshot snapshot, int x, int y, int width) {
+    *///?}
+        drawContent(context, snapshot, x, y, width, false);
+    }
+
+    //? if >=26.1 {
+    /*private static void drawContent(GuiGraphicsExtractor context, LoadSnapshot snapshot, int x, int y, int width, boolean branded) {
+    *///?} else if >=1.20 {
+    private static void drawContent(DrawContext context, LoadSnapshot snapshot, int x, int y, int width, boolean branded) {
+    //?} else {
+    /*private static void drawContent(LegacyDrawContext context, LoadSnapshot snapshot, int x, int y, int width, boolean branded) {
+    *///?}
         ensureInitialized();
         AppearanceSettings style = AppearanceSettings.current();
-        drawRecessedPanel(context, x, y, width, OverlayLayout.PANEL_HEIGHT);
+        drawRecessedPanel(context, x, y, width, branded ? OverlayLayout.PANEL_HEIGHT : OverlayLayout.CONTENT_HEIGHT);
+        if (branded) {
+            PortoriumLogo.drawLoading(context, x + width / 2, y + 6, Math.min(148, width - 20));
+            y += OverlayLayout.LOGO_HEADER_HEIGHT;
+        }
 
         if (!BitmapCinzelFont.isReady()) {
             return;
@@ -152,8 +178,8 @@ public final class MetrakronOverlayRenderer {
     /*private static void drawRecessedPanel(LegacyDrawContext context, int x, int y, int width, int height) {
     *///?}
         AppearanceSettings style = AppearanceSettings.current();
-        BronzeFrameStyle.draw((l, t, r, b, color) -> context.fill(l, t, r, b, style.metalColor(color)), x, y, width, height);
-        int contentInset = BronzeFrameStyle.CONTENT_INSET;
+        int contentInset = 0;
+        StoneCrop crop = StoneCrop.fit(stoneWidth, stoneHeight, width, height, style.stone());
         if (neriumTextureReady) {
             drawTexture(
                     context,
@@ -162,10 +188,10 @@ public final class MetrakronOverlayRenderer {
                     y + contentInset,
                     width - contentInset * 2,
                     height - contentInset * 2,
-                    style.stone() == AppearanceSettings.Stone.NERIUM ? 192.0F : 0.0F,
-                    style.stone() == AppearanceSettings.Stone.NERIUM ? 336.0F : 0.0F,
-                    style.stone() == AppearanceSettings.Stone.NERIUM ? 640 : stoneWidth,
-                    style.stone() == AppearanceSettings.Stone.NERIUM ? 256 : stoneHeight,
+                    (float) crop.x(),
+                    (float) crop.y(),
+                    crop.width(),
+                    crop.height(),
                     stoneWidth,
                     stoneHeight
             );
@@ -178,6 +204,7 @@ public final class MetrakronOverlayRenderer {
                     style.darkText() ? 0xFFF8F6F0 : 0xFF080807
             );
         }
+        PortoriumSurfaces.loadingFrame(context, x, y, width, height, style);
     }
 
     //? if >=26.1 {

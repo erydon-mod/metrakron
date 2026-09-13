@@ -120,6 +120,7 @@ tasks.named('jar') {
     from(rootProject.file('LICENSE'))
     from(rootProject.file('THIRD_PARTY_NOTICES.md'))
     from(rootProject.file('ASSET_PROVENANCE.md'))
+    from(rootProject.file('BRANDING.md'))
     from(rootProject.file('LICENSES')) {
         into 'LICENSES'
         include 'CC-BY-SA-4.0.txt', 'OFL-1.1.txt', 'Lato-OFL.txt', 'SpaceMono-OFL.txt'
@@ -133,6 +134,7 @@ tasks.register('smokeDevJar', Jar) {
     archiveClassifier = 'smoke-dev'
     from sourceSets.main.output
     from sourceSets.client.output
+    exclude 'assets/**'
 }
 
 tasks.register('buildAndCollect', Copy) {

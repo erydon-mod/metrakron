@@ -510,15 +510,21 @@ public final class DesktopOverlayBridge {
                 .orElseThrow(() -> new IOException("Metrakron mod container is unavailable"));
 
         ModOrigin origin = container.getOrigin();
-        if (origin.getKind() == ModOrigin.Kind.PATH) {
-            return DesktopOverlayClasspath.direct(origin.getPaths());
-        }
-
-        return DesktopOverlayClasspath.selectedCodeSource(
+        DesktopOverlayClasspath.Resolution selected = origin.getKind() == ModOrigin.Kind.PATH
+                ? DesktopOverlayClasspath.direct(origin.getPaths())
+                : DesktopOverlayClasspath.selectedCodeSource(
                 selectedAdapterCodeSource(),
                 configDirectory,
                 container.getMetadata().getVersion().getFriendlyString()
         );
+        ModContainer bundle = FabricLoader.getInstance().getModContainer("metrakron_bundle").orElse(null);
+        if (bundle == null) return selected; // Standalone and ordinary development builds retain assets.
+        if (bundle.getOrigin().getKind() != ModOrigin.Kind.PATH) {
+            throw new IOException("Metrakron shared asset bundle has no filesystem origin");
+        }
+        String shared = DesktopOverlayClasspath.direct(bundle.getOrigin().getPaths()).classpath();
+        return new DesktopOverlayClasspath.Resolution(
+                selected.classpath() + java.io.File.pathSeparator + shared, selected.cachedJar());
     }
 
     private static Path selectedAdapterCodeSource() throws IOException {

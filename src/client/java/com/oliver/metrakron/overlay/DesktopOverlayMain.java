@@ -268,6 +268,7 @@ public final class DesktopOverlayMain {
         private BufferedImage nerium;
         private Font cinzel;
         private BitmapCinzelTimer bitmapTimer;
+        private static final BufferedImage logoAtlas = loadImage(LogoAnimation.RESOURCE);
 
         private void refreshAppearance() {
             AppearanceSettings selected = AppearanceSettings.current();
@@ -388,16 +389,17 @@ public final class DesktopOverlayMain {
                         RenderingHints.VALUE_INTERPOLATION_BILINEAR
                 );
                 drawPanel(context);
-                drawCentered(context, renderText.heading, 18, 10.5F, 6.0F, new Color(appearance.textColor(), true), true);
+                LogoAnimation.draw(context, logoAtlas, 34, 6, 148, 44, System.nanoTime());
+                drawCentered(context, renderText.heading, 18 + OverlayLayout.LOGO_HEADER_HEIGHT, 10.5F, 6.0F, new Color(appearance.textColor(), true), true);
                 if (bitmapTimer == null) {
-                    drawCentered(context, renderText.timer, 51, 25.0F, 15.0F,
+                    drawCentered(context, renderText.timer, 51 + OverlayLayout.LOGO_HEADER_HEIGHT, 25.0F, 15.0F,
                             new Color(appearance.accentColor(), true), true);
                 } else {
                     bitmapTimer.drawCentered(
                             context,
                             renderText.timer,
                             OverlayLayout.PANEL_WIDTH / 2,
-                            25,
+                            25 + OverlayLayout.LOGO_HEADER_HEIGHT,
                             OverlayLayout.PANEL_WIDTH - 20,
                             0.16F,
                             0.0F
@@ -415,7 +417,7 @@ public final class DesktopOverlayMain {
                 CountdownBar.draw((l, t, r, b, color) -> {
                     context.setColor(new Color(color, true));
                     context.fillRect(l, t, r - l, b - t);
-                }, 12, 57, OverlayLayout.PANEL_WIDTH - 24, barElapsed, barAverage, appearance);
+                }, 12, 57 + OverlayLayout.LOGO_HEADER_HEIGHT, OverlayLayout.PANEL_WIDTH - 24, barElapsed, barAverage, appearance);
                 drawLink(context);
             } finally {
                 context.dispose();
@@ -430,34 +432,15 @@ public final class DesktopOverlayMain {
             int width = OverlayLayout.PANEL_WIDTH;
             int height = DesktopOverlayLink.PANEL_HEIGHT;
 
-            BronzeFrameStyle.draw((left, top, right, bottom, argb) -> {
-                context.setColor(new Color(appearance.metalColor(argb), true));
-                context.fillRect(left, top, right - left, bottom - top);
-            }, 0, 0, width, height);
-
             if (nerium != null) {
-                int contentInset = BronzeFrameStyle.CONTENT_INSET;
-                context.drawImage(
-                        nerium,
-                        contentInset,
-                        contentInset,
-                        width - contentInset,
-                        height - contentInset,
-                        appearance.stone() == AppearanceSettings.Stone.NERIUM ? 192 : 0,
-                        appearance.stone() == AppearanceSettings.Stone.NERIUM ? 336 : 0,
-                        appearance.stone() == AppearanceSettings.Stone.NERIUM ? 832 : nerium.getWidth(),
-                        appearance.stone() == AppearanceSettings.Stone.NERIUM ? 592 : nerium.getHeight(),
-                        null
-                );
+                StoneCrop crop = StoneCrop.fit(nerium.getWidth(), nerium.getHeight(), width, height, appearance.stone());
+                context.drawImage(nerium, 0, 0, width, height,
+                        crop.x(), crop.y(), crop.x() + crop.width(), crop.y() + crop.height(), null);
             } else {
                 context.setColor(new Color(appearance.darkText() ? 0xF8F6F0 : 0x080807));
-                context.fillRect(
-                        BronzeFrameStyle.CONTENT_INSET,
-                        BronzeFrameStyle.CONTENT_INSET,
-                        width - BronzeFrameStyle.CONTENT_INSET * 2,
-                        height - BronzeFrameStyle.CONTENT_INSET * 2
-                );
+                context.fillRect(0, 0, width, height);
             }
+            PolishedFrame.draw(context, width, height, appearance);
         }
 
         private void drawLink(Graphics2D context) {
