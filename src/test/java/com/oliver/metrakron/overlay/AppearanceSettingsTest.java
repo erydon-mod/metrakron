@@ -23,6 +23,21 @@ class AppearanceSettingsTest {
         assertEquals(AppearanceSettings.Stone.GLACIUM, AppearanceSettings.read(file).stone());
         assertEquals(AppearanceSettings.Metal.SILVER, AppearanceSettings.read(file).metal());
     }
+    @Test void positionPersistsAndOlderConfigsKeepTheirAppearance() throws Exception {
+        Path file = directory.resolve("appearance.properties");
+        for (var position : OverlayPosition.values()) {
+            var settings = new AppearanceSettings(AppearanceSettings.Stone.NERIUM,
+                    AppearanceSettings.Typeface.LATO, AppearanceSettings.Metal.SILVER, position);
+            settings.save(file);
+            assertEquals(settings, AppearanceSettings.read(file));
+        }
+        for (String positionLine : new String[]{"", "position=INVALID\n"}) {
+            Files.writeString(file, "stone=NERIUM\nfont=LATO\nmetal=SILVER\n" + positionLine);
+            assertEquals(new AppearanceSettings(AppearanceSettings.Stone.NERIUM,
+                    AppearanceSettings.Typeface.LATO, AppearanceSettings.Metal.SILVER,
+                    OverlayPosition.TOP_LEFT), AppearanceSettings.read(file));
+        }
+    }
     @Test void countdownUsesOnlyOwnEstimateAndClamps() {
         assertEquals(1, CountdownBar.remaining(0, 1000L));
         assertEquals(.5, CountdownBar.remaining(500, 1000L));

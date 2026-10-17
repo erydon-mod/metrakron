@@ -475,11 +475,21 @@ public final class DesktopOverlayBridge {
             //?}
         }
         scale = Math.max(0.5D, scale);
-        int x = window.getX() + (int) Math.round(OverlayLayout.MARGIN * scale);
-        int y = window.getY() + (int) Math.round(OverlayLayout.MARGIN * scale);
+        //? if >=26.1 {
+        /*int areaWidth = window.getScreenWidth();
+        int areaHeight = window.getScreenHeight();
+        *///?} else {
+        int areaWidth = window.getWidth();
+        int areaHeight = window.getHeight();
+        //?}
+        // Fit small windows without moving any part of the helper outside the game.
+        scale = Math.min(scale, Math.min(Math.max(1, areaWidth) / (double) (OverlayLayout.PANEL_WIDTH + 2 * OverlayLayout.MARGIN),
+                Math.max(1, areaHeight) / (double) (DesktopOverlayLink.PANEL_HEIGHT + 2 * OverlayLayout.MARGIN)));
         int width = Math.max(1, (int) Math.round(OverlayLayout.PANEL_WIDTH * scale));
         int height = Math.max(1, (int) Math.round(DesktopOverlayLink.PANEL_HEIGHT * scale));
-        return new Geometry(x, y, width, height);
+        var bounds = AppearanceSettings.current().position().place(areaWidth, areaHeight, width, height,
+                (int) Math.round(OverlayLayout.MARGIN * scale));
+        return new Geometry(window.getX() + bounds.x(), window.getY() + bounds.y(), bounds.width(), bounds.height());
     }
 
     private static Path javaExecutable(DesktopOverlayPlatform.Capability capability) throws IOException {

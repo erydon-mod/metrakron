@@ -56,6 +56,8 @@ final class BitmapCinzelFont {
     private static boolean ready;
     private static boolean failureLogged;
     private static String loadedFont;
+    private static BitmapMenuLayout menuLayout;
+    private static String menuFont;
 
     private BitmapCinzelFont() {
     }
@@ -126,6 +128,63 @@ final class BitmapCinzelFont {
 
     static boolean isReady() {
         return ready;
+    }
+
+    /** Centers visible menu lettering and scales a complete baseline together. */
+    static void drawMenuLabel(
+            //? if >=26.1 {
+            /*GuiGraphicsExtractor context,
+            *///?} else if >=1.20 {
+            DrawContext context,
+            //?} else {
+            /*LegacyDrawContext context,
+            *///?}
+            String value, int centerX, int centerY, int maximumWidth, int maximumHeight,
+            float preferredScale, int color
+    ) {
+        if (!ready || value == null || value.isEmpty()) return;
+        if (!loadedFont.equals(menuFont)) {
+            menuFont = loadedFont;
+            menuLayout = null;
+            try (InputStream metadata = requiredResource(ATLAS_JSON.replace("cinzel", loadedFont));
+                 InputStream png = requiredResource(ATLAS_PNG.replace("cinzel", loadedFont))) {
+                menuLayout = BitmapMenuLayout.load(metadata, png);
+            } catch (IOException | RuntimeException exception) {
+                MetrakronClient.LOGGER.warn("Unable to measure menu font ink bounds", exception);
+            }
+        }
+        if (menuLayout == null) {
+            drawCentered(context, value, centerX, centerY - 5, maximumWidth, preferredScale, 0, color, false);
+            return;
+        }
+        var placement = menuLayout.place(value, centerX, centerY, maximumWidth, maximumHeight, preferredScale);
+        // Glyph positions and sizes stay at atlas resolution. One matrix transform scales
+        // the whole baseline, avoiding a different rounding error for each letter.
+        //? if >=26.1 {
+        /*var pose = context.pose();
+        pose.pushMatrix();
+        pose.translate(placement.originX(), placement.baselineY());
+        pose.scale(placement.scale(), placement.scale());
+        *///?} else if >=1.21.6 {
+        /*var pose = context.getMatrices();
+        pose.pushMatrix();
+        pose.translate(placement.originX(), placement.baselineY());
+        pose.scale(placement.scale(), placement.scale());
+        *///?} else {
+        var pose = context.getMatrices();
+        pose.push();
+        pose.translate(placement.originX(), placement.baselineY(), 0);
+        pose.scale(placement.scale(), placement.scale(), 1);
+        //?}
+        try {
+            draw(context, value, 0, -atlas.ascent, 1, 0, color);
+        } finally {
+            //? if >=1.21.6 {
+            /*pose.popMatrix();
+            *///?} else {
+            pose.pop();
+            //?}
+        }
     }
 
     static void drawCentered(

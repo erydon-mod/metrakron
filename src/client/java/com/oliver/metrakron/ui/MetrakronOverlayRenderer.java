@@ -85,10 +85,12 @@ public final class MetrakronOverlayRenderer {
         }
 
         int width = Math.min(OverlayLayout.PANEL_WIDTH, screenWidth - OverlayLayout.MARGIN * 2);
-        int x = OverlayLayout.MARGIN;
-        int y = OverlayLayout.MARGIN;
-        if (screenHeight >= OverlayLayout.PANEL_HEIGHT + OverlayLayout.MARGIN * 2) drawAt(context, snapshot, x, y, width);
-        else drawPreviewAt(context, snapshot, x, y, width);
+        boolean branded = screenHeight >= OverlayLayout.PANEL_HEIGHT + OverlayLayout.MARGIN * 2;
+        int height = branded ? OverlayLayout.PANEL_HEIGHT : OverlayLayout.CONTENT_HEIGHT;
+        var bounds = AppearanceSettings.current().position().place(screenWidth, screenHeight,
+                width, height, OverlayLayout.MARGIN);
+        if (branded) drawAt(context, snapshot, bounds.x(), bounds.y(), width);
+        else drawPreviewAt(context, snapshot, bounds.x(), bounds.y(), width);
     }
 
     //? if >=26.1 {

@@ -6,7 +6,10 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 /** Presentation only: never included in timing histories or profile fingerprints. */
-public record AppearanceSettings(Stone stone, Typeface font, Metal metal) {
+public record AppearanceSettings(Stone stone, Typeface font, Metal metal, OverlayPosition position) {
+    public AppearanceSettings(Stone stone, Typeface font, Metal metal) {
+        this(stone, font, metal, OverlayPosition.TOP_LEFT);
+    }
     public enum Stone { NERIUM, AGANITE, ATERZON, BOREALIS, BRECTITE, CALACATTUM, CHALSTROM, CHRYSONYX, ETRUSCUS, GELASTRUM, GLACIUM, HESPERION, IMPERIUM, KELASTRION, KYLORION, LATMION, LAURENTIUM, MIELONYX, NOXOPLIS, PORPHYROS, PORTORIUM, PSAMATHEON, ROSINIUM, SANGUENITE, SELENEPHOS, SOLISTRA, STRIATUS }
     public enum Typeface { CINZEL, LATO, SPACEMONO }
     public enum Metal { BRONZE, SILVER }
@@ -44,7 +47,8 @@ public record AppearanceSettings(Stone stone, Typeface font, Metal metal) {
         try (var input = Files.newInputStream(file)) { p.load(input); }
         return new AppearanceSettings(value(Stone.class, p.getProperty("stone"), DEFAULT.stone),
                 value(Typeface.class, p.getProperty("font"), DEFAULT.font),
-                value(Metal.class, p.getProperty("metal"), DEFAULT.metal));
+                value(Metal.class, p.getProperty("metal"), DEFAULT.metal),
+                value(OverlayPosition.class, p.getProperty("position"), DEFAULT.position));
     }
     private static <E extends Enum<E>> E value(Class<E> type, String name, E fallback) {
         try { return Enum.valueOf(type, name); } catch (IllegalArgumentException | NullPointerException ignored) { return fallback; }
@@ -52,6 +56,7 @@ public record AppearanceSettings(Stone stone, Typeface font, Metal metal) {
     public void save(Path file) throws IOException {
         Properties p = new Properties();
         p.setProperty("stone", stone.name()); p.setProperty("font", font.name()); p.setProperty("metal", metal.name());
+        p.setProperty("position", position.name());
         OverlayStateFile.writeProperties(file, p, "ERYDON Metrakron appearance");
     }
 }
