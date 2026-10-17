@@ -432,7 +432,9 @@ public final class DesktopOverlayBridge {
         List<String> command = new ArrayList<>();
         command.add(javaExecutable(capability).toString());
         command.add("-Xms16m");
-        command.add("-Xmx64m");
+        // The doubled-resolution animation decodes to about 53 MiB by itself.
+        // This is a heap ceiling; the helper still starts with a 16 MiB heap.
+        command.add("-Xmx128m");
         command.add("-XX:+UseSerialGC");
         if (capability.kind() != DesktopOverlayPlatform.Kind.MACOS) {
             command.add("-Dsun.java2d.uiScale=1");

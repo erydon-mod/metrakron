@@ -135,6 +135,10 @@ The appearance screen uses matching Portorium controls. Both the independent
 window and the in-game fallback animate the logo; saved appearance choices are
 preserved. A pre-baked Cinzel atlas makes the text available before Minecraft's
 own fonts. The reflection loop is presentation only and never affects timing.
+Animation frames are 512x152 pixels, downsampled from the lossless marketing
+master; the settings menu and loading panel reuse the same texture. The desktop
+helper starts with a 16 MiB Java heap and permits growth to 128 MiB for the
+higher-resolution animation.
 
 ## Build and test
 
@@ -150,6 +154,20 @@ bytecode, and deterministic ZIP layout. Set `-Pmetrakron.python=<command>` if
 Python 3 is not available as the platform's normal `python` or `python3`
 command. The result is written to
 `build/libs/metrakron-fabric-universal-1.1.0.jar`.
+
+To regenerate the runtime animation, install Pillow and run
+`python tools/import_logo_animation.py --frames-dir <lossless-metrakron-logo-frames>`.
+The source is the 209-frame, 24-fps marketing sequence; the runtime retains its
+174-frame, 20-fps loop. After compilation, the actual desktop panel can be checked
+under its helper memory limit without opening a window:
+
+```text
+java -Xms16m -Xmx128m -XX:+UseSerialGC -Djava.awt.headless=true -cp "versions/1.20.1/build/classes/java/client;src/client/resources" tools/VerifyLogoRendering.java build/reports/logo-memory-check
+```
+
+Use `:` instead of `;` as the classpath separator on macOS and Linux. The tool
+checks every animation frame and renders the desktop panel with three stones
+and all fonts, saving sample preview images under the specified report folder.
 
 Disposable nested-bundle launch checks are available as
 `:smoke1201:runClient`, `:smoke12111:runClient`, and `:smoke262:runClient`.

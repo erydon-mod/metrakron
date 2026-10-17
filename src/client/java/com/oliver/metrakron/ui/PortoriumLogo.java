@@ -33,7 +33,6 @@ import net.minecraft.client.texture.NativeImageBackedTexture;
 
 /** Cached branding for menus and the early loading display. */
 final class PortoriumLogo {
-    private static final Identifier LOGO = id("textures/gui/portorium_logo.png");
     private static final Identifier EMBLEM = id("icon.png");
     private static final Identifier EARLY_LOGO = id("dynamic/portorium_logo");
     private static boolean logoReady;
@@ -74,20 +73,14 @@ final class PortoriumLogo {
             /*LegacyDrawContext context,
             *///?}
             int centerX, int top, int headerHeight) {
-        int frame = LogoAnimation.frame(System.nanoTime());
-        boolean wide = headerHeight > 0;
-        Identifier texture = wide ? LOGO : EMBLEM;
-        int w = wide ? 182 : 14;
-        int h = wide ? 54 : 14;
-        int x = wide ? centerX - w / 2 : centerX - 106;
-        int y = top + 1;
-        float u = wide ? (frame % 8) * 256 : 0;
-        float v = wide ? (frame / 8) * 76 : 0;
-        int sw = wide ? 256 : 512;
-        int sh = wide ? 76 : 512;
-        int tw = wide ? 2048 : 512;
-        int th = wide ? 1672 : 512;
-        PortoriumSurfaces.texture(context, texture, x, y, w, h, u, v, sw, sh, tw, th);
+        if (headerHeight > 0) {
+            // Reuse the early-loading texture rather than uploading a second
+            // decoded copy of the enlarged animation for the settings menu.
+            drawLoading(context, centerX, top + 1, 182);
+        } else {
+            PortoriumSurfaces.texture(context, EMBLEM, centerX - 106, top + 1,
+                    14, 14, 0, 0, 512, 512, 512, 512);
+        }
     }
     static void drawLoading(
             //? if >=26.1 {
@@ -107,8 +100,11 @@ final class PortoriumLogo {
         if (!logoReady) return;
         int frame = LogoAnimation.frame(now);
         PortoriumSurfaces.texture(context, EARLY_LOGO, centerX - width / 2, top, width,
-                Math.max(1, width * 76 / 256), (frame % 8) * 256, (frame / 8) * 76,
-                256, 76, 2048, 1672);
+                Math.max(1, width * LogoAnimation.FRAME_HEIGHT / LogoAnimation.FRAME_WIDTH),
+                (frame % LogoAnimation.COLUMNS) * LogoAnimation.FRAME_WIDTH,
+                (frame / LogoAnimation.COLUMNS) * LogoAnimation.FRAME_HEIGHT,
+                LogoAnimation.FRAME_WIDTH, LogoAnimation.FRAME_HEIGHT,
+                LogoAnimation.ATLAS_WIDTH, LogoAnimation.ATLAS_HEIGHT);
     }
 
     //? if >=26.1 {
@@ -133,7 +129,8 @@ final class PortoriumLogo {
             texture = createTexture("ERYDON Metrakron branding atlas", image);
             //?}
             image = null;
-            //? if <1.21.5
+            // Dynamic textures bypass .mcmeta; keep smooth filtering on every adapter.
+            //? if <1.21.9
             texture.setFilter(true, false);
             //? if >=26.1 {
             /*client.getTextureManager().register(target, texture);
@@ -159,11 +156,23 @@ final class PortoriumLogo {
 
     //? if >=26.1 {
     /*private static DynamicTexture createTexture(String name, NativeImage image) {
-        return new DynamicTexture(() -> name, image);
+        return new DynamicTexture(() -> name, image) {
+            @Override public com.mojang.blaze3d.textures.GpuSampler getSampler() {
+                return com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
+                        .getClampToEdge(com.mojang.blaze3d.textures.FilterMode.LINEAR);
+            }
+        };
     }
     *///?} else {
     private static NativeImageBackedTexture createTexture(String name, NativeImage image) {
-        //? if >=1.21.5 {
+        //? if >=1.21.9 {
+        /*return new NativeImageBackedTexture(() -> name, image) {
+            @Override public net.minecraft.client.gl.GpuSampler getSampler() {
+                return com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
+                        .get(com.mojang.blaze3d.textures.FilterMode.LINEAR);
+            }
+        };
+        *///?} else if >=1.21.5 {
         /*return new NativeImageBackedTexture(() -> name, image);
         *///?} else {
         return new NativeImageBackedTexture(image);

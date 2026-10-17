@@ -33,8 +33,12 @@ Minecraft tick per frame, without interpolation. GUI logos use a filtered
 and resource-pack selection icons use static square PNGs.
 
 Metrakron uses the approved 174-frame, 20-fps reflection loop (8.7 seconds)
-in both loading displays and the full appearance-screen header. The default
-loading-panel stone is pale Glacium, giving the Portorium plaque clear separation.
+in both loading displays and the full appearance-screen header. Each runtime
+frame is 512x152 pixels, downsampled from the lossless marketing master, with
+the same on-screen size as before. The 4096x3344 atlas is shared by both renderers.
+The independent desktop helper starts with a 16 MiB heap and allows growth up
+to 128 MiB to accommodate the approximately 53 MiB decoded animation.
+The default loading-panel stone is pale Glacium, giving the Portorium plaque clear separation.
 Portorium controls and the outside panel border share one authored bevel and
 recessed polished metal frame, with bronze and silver options. Existing saved
 appearance choices are preserved. Marketing renderer captures use sample timer

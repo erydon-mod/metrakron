@@ -6,6 +6,11 @@ Cinzel SemiBold lettering and reflection loop were rendered from geometry with
 Codex assistance. This is an upscale of an owned photograph, not a newly
 generated stone texture (confirmed by Oliver on 13 September 2026). The PNG
 exports retain the approved texture crops; see `BRANDING.md` for placement.
+The runtime logo animation uses 512x152-pixel frames downsampled directly from
+the lossless 2060x614 marketing PNG sequence. `tools/import_logo_animation.py`
+preserves transparency and samples the 24-fps master at the existing 20-fps
+runtime cadence: 174 frames, 8.7 seconds. The intermediate atlas is 4096x3344;
+it is not an enlargement of the former 256x76 runtime frames.
 Cinzel lettering is a rendered image, under the same OFL font attribution as
 the existing Cinzel assets. Oliver-owned branding remains CC BY-SA 4.0.
 

@@ -27,6 +27,10 @@ class BrandingLayoutTest {
         try (var stream = getClass().getResourceAsStream(LogoAnimation.RESOURCE)) {
             assertNotNull(stream);
             var atlas = ImageIO.read(stream);
+            assertEquals(LogoAnimation.ATLAS_WIDTH, atlas.getWidth());
+            assertEquals(LogoAnimation.ATLAS_HEIGHT, atlas.getHeight());
+            assertTrue(atlas.getWidth() <= 4096 && atlas.getHeight() <= 4096,
+                    "The complete animation must fit a 4096-pixel texture");
             for (int i = 0; i < LogoAnimation.FRAMES; i++) {
                 long time = now + i * LogoAnimation.FRAME_NANOS;
                 int frame = LogoAnimation.frame(time);
