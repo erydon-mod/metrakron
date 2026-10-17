@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
+import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
@@ -35,6 +36,7 @@ import net.minecraft.client.gui.screen.DownloadingTerrainScreen;
 import net.minecraft.client.gui.screen.LevelLoadingScreen;
 //?}
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.DisconnectedScreen;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.gui.screen.world.SelectWorldScreen;
@@ -124,6 +126,22 @@ public final class MetrakronClient implements ClientModInitializer {
         *///?} else {
         MinecraftClient client = MinecraftClient.getInstance();
         //?}
+        // A focus-loss pause menu is a ready world, not another joining screen.
+        // Observe it here rather than through the HUD, which may be hidden.
+        //? if >=26.1 {
+        /*boolean pauseScreen = screen instanceof PauseScreen;
+        *///?} else {
+        boolean pauseScreen = screen instanceof GameMenuScreen;
+        //?}
+        if (pauseScreen) {
+            if (controller.observePauseScreenFrame(client)) {
+                DesktopOverlayBridge.hide();
+            } else {
+                controller.noteWorldActivity(LoadActivity.WORLD_FIRST_FRAME);
+                drawAndPublish(context, controller.snapshot(LoadStage.WORLD_FIRST_FRAME));
+            }
+            return;
+        }
         LoadStage stage = stageForScreen(client, screen);
         controller.noteBlockingScreen(activityForStage(stage));
         drawAndPublish(context, controller.snapshot(stage));

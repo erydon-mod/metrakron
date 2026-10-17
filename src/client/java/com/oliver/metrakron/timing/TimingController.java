@@ -2,8 +2,10 @@ package com.oliver.metrakron.timing;
 
 //? if >=26.1 {
 /*import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.PauseScreen;
 *///?} else {
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.GameMenuScreen;
 //?}
 
 import java.nio.file.Path;
@@ -167,27 +169,43 @@ public final class TimingController {
     *///?} else {
     public synchronized boolean observeHudFrame(MinecraftClient client) {
     //?}
-        if (active == null || active.kind == LoadKind.STARTUP) {
+        return observeWorldFrame(captureFrameState(client), false);
+    }
+
+    //? if >=26.1 {
+    /*public synchronized boolean observePauseScreenFrame(Minecraft client) {
+    *///?} else {
+    public synchronized boolean observePauseScreenFrame(MinecraftClient client) {
+    //?}
+        return observeWorldFrame(captureFrameState(client), true);
+    }
+
+    synchronized boolean observeWorldFrame(WorldFrameState state, boolean screenCallback) {
+        if (!state.acceptsCallback(screenCallback)) {
             return false;
         }
+        return observeHudFrame(state.ready());
+    }
 
+    //? if >=26.1 {
+    /*private static WorldFrameState captureFrameState(Minecraft client) {
+    *///?} else {
+    private static WorldFrameState captureFrameState(MinecraftClient client) {
+    //?}
+        // A pause menu is not a loading screen, even when focus loss opened it.
+        // Keep all other screens and resource overlays excluded.
         //? if >=26.2 {
-        /*boolean playableFrame = client.level != null
-                && client.player != null
-                && client.gui.screen() == null
-                && client.gui.overlay() == null;
+        /*return new WorldFrameState(client.level != null, client.player != null,
+                client.gui.screen() != null, client.gui.screen() instanceof PauseScreen,
+                client.gui.overlay() != null);
         *///?} else if >=26.1 {
-        /*boolean playableFrame = client.level != null
-                && client.player != null
-                && client.screen == null
-                && client.getOverlay() == null;
+        /*return new WorldFrameState(client.level != null, client.player != null,
+                client.screen != null, client.screen instanceof PauseScreen, client.getOverlay() != null);
         *///?} else {
-        boolean playableFrame = client.world != null
-                && client.player != null
-                && client.currentScreen == null
-                && client.getOverlay() == null;
+        return new WorldFrameState(client.world != null, client.player != null,
+                client.currentScreen != null, client.currentScreen instanceof GameMenuScreen,
+                client.getOverlay() != null);
         //?}
-        return observeHudFrame(playableFrame);
     }
 
     synchronized boolean observeHudFrame(boolean playableFrame) {

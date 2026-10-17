@@ -199,6 +199,72 @@ class TimingControllerTest {
         assertTrue(store().quickPlayAverage(PROFILE, KEY).isEmpty());
     }
 
+    @Test
+    void backgroundPauseFinishesManualAndQuickPlayWithoutRecordingLaterIdleTime() {
+        for (boolean quick : new boolean[]{false, true}) {
+            atSeconds(0);
+            TimingController timer = quick ? quickPlay(SAVE) : new TimingController(file(), clock::get);
+            if (quick) timer.ensureStartupStarted(PROFILE);
+            else timer.startWorld(PROFILE, SAVE, SAVE);
+            var paused = new WorldFrameState(true, true, true, true, false);
+            atSeconds(30);
+            // HUD + pause-screen callbacks from the same frame must count once.
+            for (int frame = 0; frame < 3; frame++) {
+                assertFalse(timer.observeWorldFrame(paused, false));
+                assertEquals(frame == 2, timer.observeWorldFrame(paused, true));
+            }
+            assertFalse(timer.snapshot(LoadStage.WORLD_FIRST_FRAME).active());
+            atSeconds(600);
+            assertFalse(timer.observeWorldFrame(paused, true));
+            assertFalse(timer.observeWorldFrame(new WorldFrameState(true, true, false, false, false), false));
+            long recorded = quick ? store().quickPlayAverage(PROFILE, KEY).orElseThrow()
+                    : store().worldAverage(PROFILE, KEY).orElseThrow();
+            assertEquals(30_000L, recorded, "Background idle time must not enter the average");
+        }
+    }
+
+    @Test
+    void pauseCanFinishWithoutAnyHudCallbacksButNotWithoutWorldPlayerOrWithOverlay() {
+        TimingController timer = quickPlay(SAVE);
+        timer.ensureStartupStarted(PROFILE);
+        var paused = new WorldFrameState(true, true, true, true, false);
+        for (var blocked : new WorldFrameState[]{
+                new WorldFrameState(false, true, true, true, false),
+                new WorldFrameState(true, false, true, true, false),
+                new WorldFrameState(true, true, true, true, true)}) {
+            assertFalse(timer.observeWorldFrame(paused, true));
+            assertFalse(timer.observeWorldFrame(paused, true));
+            assertFalse(timer.observeWorldFrame(blocked, true));
+        }
+        atSeconds(25);
+        assertFalse(timer.observeWorldFrame(paused, true));
+        assertFalse(timer.observeWorldFrame(paused, true));
+        assertTrue(timer.observeWorldFrame(paused, true));
+        assertEquals(25_000L, store().quickPlayAverage(PROFILE, KEY).orElseThrow());
+    }
+
+    @Test
+    void loadingScreensStillResetReadinessAndCancellationStillDiscardsPausedAttempt() {
+        TimingController timer = quickPlay(SAVE);
+        timer.ensureStartupStarted(PROFILE);
+        var paused = new WorldFrameState(true, true, true, true, false);
+        var loading = new WorldFrameState(true, true, true, false, false);
+        assertFalse(loading.ready());
+        assertFalse(timer.observeWorldFrame(paused, true));
+        assertFalse(timer.observeWorldFrame(paused, true));
+        // Same route as renderScreenTimer for reading/generation/joining screens.
+        timer.noteBlockingScreen(LoadActivity.WORLD_JOINING);
+        for (int i = 0; i < 10; i++) {
+            assertFalse(timer.observeWorldFrame(loading, false));
+            assertFalse(timer.observeWorldFrame(loading, true));
+        }
+        assertFalse(timer.observeWorldFrame(paused, true));
+        assertFalse(timer.observeWorldFrame(paused, true));
+        assertTrue(timer.cancelWorldLoad());
+        assertFalse(timer.observeWorldFrame(paused, true));
+        assertTrue(store().quickPlayAverage(PROFILE, KEY).isEmpty());
+    }
+
     private TimingController quickPlay(String folder) {
         return new TimingController(file(), clock::get, new QuickPlayLaunch(true, folder));
     }
