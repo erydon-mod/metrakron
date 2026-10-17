@@ -6,11 +6,14 @@ import com.google.gson.JsonParseException;
 import com.oliver.metrakron.MetrakronClient;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,6 +25,8 @@ import java.util.Objects;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 final class BaselineStore {
     private static final int VOLATILE_PROFILE_SCHEMA_VERSION = 1;
@@ -29,31 +34,35 @@ final class BaselineStore {
     private static final int ROLLING_HISTORY_SCHEMA_VERSION = 3;
     private static final int SCHEMA_VERSION = 4;
     private static final int MAX_COMPLETED_RUNS = 3;
+    // FileLock blocks other processes, but overlapping locks in one JVM throw
+    // instead of waiting. Serialize this JVM's stores before taking the OS lock.
+    private static final Map<Path, ReentrantLock> JVM_LOCKS = new ConcurrentHashMap<>();
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .disableHtmlEscaping()
             .create();
 
     private final Path file;
+    private final List<PendingRun> pendingRuns = new ArrayList<>();
     private Data data;
 
     BaselineStore(Path file) {
-        this.file = file;
-        this.data = read(file);
+        this.file = file.toAbsolutePath().normalize();
+        this.data = readSafely(this.file);
     }
 
     synchronized OptionalLong startupAverage(ProfileFingerprint profile) {
-        upgradeProfile(profile);
+        refresh(profile);
         return averageLatestDistinct(data.startup.values());
     }
 
     synchronized OptionalLong worldAverage(ProfileFingerprint profile, String worldKey) {
-        upgradeProfile(profile);
+        refresh(profile);
         return averageForWorld(data.worlds, worldKey);
     }
 
     synchronized OptionalLong quickPlayAverage(ProfileFingerprint profile, String worldKey) {
-        upgradeProfile(profile);
+        refresh(profile);
         return averageForWorld(data.quickPlayWorlds, worldKey);
     }
 
@@ -69,12 +78,8 @@ final class BaselineStore {
     }
 
     synchronized void recordStartup(ProfileFingerprint profile, long milliseconds) {
-        upgradeProfileWithoutWriting(profile);
-        registerProfile(profile);
-        data.startup
-                .computeIfAbsent(profile.id(), ignored -> new History())
-                .record(milliseconds, "Game startup");
-        write();
+        record(new PendingRun(LoadKind.STARTUP, profile, profile.id(),
+                Measurement.create(milliseconds, "Game startup")));
     }
 
     synchronized void recordWorld(
@@ -83,12 +88,8 @@ final class BaselineStore {
             String worldLabel,
             long milliseconds
     ) {
-        upgradeProfileWithoutWriting(profile);
-        registerProfile(profile);
-        data.worlds
-                .computeIfAbsent(worldKey, ignored -> new History())
-                .record(milliseconds, worldLabel);
-        write();
+        record(new PendingRun(LoadKind.WORLD, profile, worldKey,
+                Measurement.create(milliseconds, worldLabel)));
     }
 
     synchronized void recordQuickPlay(
@@ -97,12 +98,24 @@ final class BaselineStore {
             String worldLabel,
             long milliseconds
     ) {
-        upgradeProfileWithoutWriting(profile);
-        registerProfile(profile);
-        data.quickPlayWorlds
-                .computeIfAbsent(worldKey, ignored -> new History())
-                .record(milliseconds, worldLabel);
-        write();
+        record(new PendingRun(LoadKind.QUICK_PLAY, profile, worldKey,
+                Measurement.create(milliseconds, worldLabel)));
+    }
+
+    private void record(PendingRun run) {
+        pendingRuns.add(run);
+        apply(run); // Keep a completed run available locally if persistence fails.
+        refresh(run.profile);
+    }
+
+    private void apply(PendingRun run) {
+        registerProfile(run.profile);
+        Map<String, History> histories = switch (run.kind) {
+            case STARTUP -> data.startup;
+            case WORLD -> data.worlds;
+            case QUICK_PLAY -> data.quickPlayWorlds;
+        };
+        histories.computeIfAbsent(run.key, ignored -> new History()).record(run.measurement);
     }
 
     private boolean registerProfile(ProfileFingerprint profile) {
@@ -113,9 +126,33 @@ final class BaselineStore {
         return true;
     }
 
-    private void upgradeProfile(ProfileFingerprint profile) {
-        if (upgradeProfileWithoutWriting(profile)) {
-            write();
+    /** Called only when a load begins or completes, never while rendering frames. */
+    private void refresh(ProfileFingerprint profile) {
+        try {
+            Path parent = file.getParent();
+            Files.createDirectories(parent);
+            Path target = parent.toRealPath().resolve(file.getFileName());
+            ReentrantLock localLock = JVM_LOCKS.computeIfAbsent(target, ignored -> new ReentrantLock());
+            localLock.lock();
+            try {
+                // Lock a stable companion, since atomic replacement changes the data file itself.
+                Path lockFile = target.resolveSibling(target.getFileName() + ".lock");
+                try (FileChannel channel = FileChannel.open(lockFile,
+                        StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                     FileLock ignored = channel.lock()) {
+                    data = read(target);
+                    boolean migrated = upgradeProfileWithoutWriting(profile);
+                    pendingRuns.forEach(this::apply);
+                    if (migrated || !pendingRuns.isEmpty()) {
+                        write(target);
+                        pendingRuns.clear();
+                    }
+                }
+            } finally {
+                localLock.unlock();
+            }
+        } catch (IOException exception) {
+            MetrakronClient.LOGGER.warn("Could not update Metrakron timing history at {}", file, exception);
         }
     }
 
@@ -177,34 +214,36 @@ final class BaselineStore {
         registerProfile(profile);
     }
 
-    private void write() {
-        Path parent = file.getParent();
-        Path temporary = file.resolveSibling(file.getFileName() + ".tmp");
+    private void write(Path target) throws IOException {
+        Path parent = target.getParent();
+        Path temporary = Files.createTempFile(parent, "." + target.getFileName() + '-', ".tmp");
         try {
-            Files.createDirectories(parent);
             Files.writeString(temporary, GSON.toJson(data), StandardCharsets.UTF_8);
             try {
                 Files.move(
                         temporary,
-                        file,
+                        target,
                         StandardCopyOption.ATOMIC_MOVE,
                         StandardCopyOption.REPLACE_EXISTING
                 );
             } catch (AtomicMoveNotSupportedException ignored) {
-                Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
             }
-        } catch (IOException exception) {
-            MetrakronClient.LOGGER.warn("Could not save Metrakron timing history to {}", file, exception);
         } finally {
-            try {
-                Files.deleteIfExists(temporary);
-            } catch (IOException ignored) {
-                // The next successful write replaces this transient file.
-            }
+            Files.deleteIfExists(temporary);
         }
     }
 
-    private static Data read(Path file) {
+    private static Data readSafely(Path file) {
+        try {
+            return read(file);
+        } catch (IOException exception) {
+            MetrakronClient.LOGGER.warn("Could not read Metrakron timing history from {}", file, exception);
+            return new Data();
+        }
+    }
+
+    private static Data read(Path file) throws IOException {
         if (!Files.isRegularFile(file)) {
             return new Data();
         }
@@ -216,7 +255,7 @@ final class BaselineStore {
             }
             loaded.sanitize();
             return loaded;
-        } catch (IOException | JsonParseException exception) {
+        } catch (JsonParseException exception) {
             MetrakronClient.LOGGER.warn("Could not read Metrakron timing history from {}", file, exception);
             return new Data();
         }
@@ -344,8 +383,15 @@ final class BaselineStore {
             return history;
         }
 
-        private void record(long milliseconds, String label) {
-            runs.add(Measurement.create(milliseconds, label));
+        private void record(Measurement measurement) {
+            // A successful replace followed by a cleanup error may be retried.
+            // Reusing the original event identity prevents counting that run twice.
+            if (runs.stream().anyMatch(run -> measurementIdentity(run).equals(measurementIdentity(measurement)))) {
+                return;
+            }
+            runs.add(measurement.copy());
+            runs.sort(Comparator.comparing(BaselineStore::capturedAt)
+                    .thenComparingLong(run -> run.milliseconds).thenComparing(run -> run.label));
             trimToLatestRuns();
         }
 
@@ -371,6 +417,10 @@ final class BaselineStore {
             }
         }
     }
+
+    private enum LoadKind { STARTUP, WORLD, QUICK_PLAY }
+
+    private record PendingRun(LoadKind kind, ProfileFingerprint profile, String key, Measurement measurement) { }
 
     private static final class Measurement {
         private long milliseconds;
