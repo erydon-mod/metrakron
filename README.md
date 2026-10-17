@@ -26,6 +26,12 @@ Stones retain their original colours, with no tint or colour wash; veined stones
 remain available and pale Glacium is the default.
 Mod Menu is optional; the timer still works without it.
 
+The **Position** control cycles through the four corners and the centre of each
+edge of the Minecraft window. It applies to both the floating desktop window and
+the in-game fallback. **Save** remembers the choice; **Cancel** restores the previous
+settings, and **Reset** returns the position to the top left. Older configurations
+keep their existing appearance and default to the top left.
+
 The countdown bar starts full and empties against Metrakron's own learned time,
 not Minecraft progress. During learning or overtime it remains empty, with the
 learning/relearning heading explaining why. Timer digits use fixed-width slots.
@@ -35,7 +41,7 @@ Source and issue tracking are public at
 
 ## Install
 
-Install `metrakron-fabric-universal-1.0.0.jar` and the matching Fabric API for
+Install `metrakron-fabric-universal-1.1.0.jar` and the matching Fabric API for
 the game version. Do not install one of the internal adapter JARs separately.
 Metrakron follows the minimum Loader version already required by that Fabric
 API instead of forcing every older modpack onto the newest Loader.
@@ -61,11 +67,12 @@ between 1.18.2 and 26.2 is interchangeable.
   includes first-run accessibility screens and custom main-menu routes.
 - Singleplayer timing begins when a world entry is played, remains visible
   through reading, generation, and joining screens, and ends only after three
-  consecutive playable HUD frames.
+  consecutive ready frames. A loaded world behind the pause menu also counts as
+  ready, so background loading does not include time spent waiting to resume.
 - Launcher singleplayer Quick Play (including CurseForge's world dropdown and
   Modrinth's world shortcut) uses
-  one continuous timer from the first Mojang splash frame through three playable
-  HUD frames. It detects Minecraft's `--quickPlaySingleplayer` argument and keeps
+  one continuous timer from the first Mojang splash frame through three ready
+  world frames (including behind the pause menu). It detects Minecraft's `--quickPlaySingleplayer` argument and keeps
   its own history for each save, separate from menu startup and manual world loads.
   Newer versions' bare Quick Play flag is resolved when Minecraft opens the save.
   Detection is launcher-independent; multiplayer and Realms shortcuts are not
@@ -142,7 +149,7 @@ build the universal download and audit its metadata, nested hashes, resources,
 bytecode, and deterministic ZIP layout. Set `-Pmetrakron.python=<command>` if
 Python 3 is not available as the platform's normal `python` or `python3`
 command. The result is written to
-`build/libs/metrakron-fabric-universal-1.0.0.jar`.
+`build/libs/metrakron-fabric-universal-1.1.0.jar`.
 
 Disposable nested-bundle launch checks are available as
 `:smoke1201:runClient`, `:smoke12111:runClient`, and `:smoke262:runClient`.
