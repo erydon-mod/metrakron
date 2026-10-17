@@ -51,7 +51,7 @@
   placement, original stone colours without a tint or colour wash, and
   dimensional bronze or silver trim. Use the selected font consistently,
   with distinct classical, sans-serif, and monospaced choices and tabular timer digits.
-  Keep original Nerium as the default; do not exclude veined stones. Select light
+  Keep pale Glacium as the default; do not exclude veined stones. Select light
   or dark text automatically and use a contrasting drop shadow for legibility.
 - Keep `en_us`, `de_de`, and `es_es` player text aligned.
 - Keep the exact Minecraft, Java, Fabric Loader, and Fabric API matrix

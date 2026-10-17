@@ -105,6 +105,8 @@ between 1.18.2 and 26.2 is interchangeable.
 
 Earlier single measurements are migrated into the rolling history. Timing data
 is local to the game instance at `config/metrakron/baselines.json`.
+Clients sharing one instance safely combine their completed timing runs, so one
+client cannot overwrite another client's recorded history.
 
 ## Freeze-resistant desktop overlay
 
@@ -148,7 +150,8 @@ the build selects Java 17, 21, or 25 for each Minecraft target.
 
 On Windows, use `gradlew.bat checkAdapters`; on macOS or Linux, use
 `./gradlew checkAdapters`. This compiles and tests all advertised adapters
-without packaging a JAR. Replace `checkAdapters` with `auditUniversalJar` to
+and checks the bundle-audit guard without packaging a JAR.
+Replace `checkAdapters` with `auditUniversalJar` to
 build the universal download and audit its metadata, nested hashes, resources,
 bytecode, and deterministic ZIP layout. Set `-Pmetrakron.python=<command>` if
 Python 3 is not available as the platform's normal `python` or `python3`

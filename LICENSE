@@ -9,16 +9,20 @@ Copyright (c) 2026 Oliver
 
 2. ERYDON-owned visual assets
 
-   The nerium and bronze textures under assets/metrakron/textures are copied or
-   adapted from ERYDON-owned assets and are licensed under Creative Commons
-   Attribution-ShareAlike 4.0 International. The legal text is in
-   LICENSES/CC-BY-SA-4.0.txt.
+   ERYDON-owned imagery under assets/metrakron includes all 27 stone
+   backgrounds, the Portorium logo and emblem, control artwork, and bronze and
+   silver textures and frames. These assets are licensed under Creative Commons
+   Attribution-ShareAlike 4.0 International. See ASSET_PROVENANCE.md and
+   BRANDING.md for their sources and LICENSES/CC-BY-SA-4.0.txt for the legal
+   text. Font files and generated font atlases are covered separately below.
 
-3. Cinzel
+3. Cinzel, Lato, and Space Mono
 
-   assets/metrakron/font/cinzel.ttf and its generated bitmap atlas are
-   separately licensed under the SIL Open Font License 1.1. See
-   THIRD_PARTY_NOTICES.md and LICENSES/OFL-1.1.txt.
+   The Cinzel, Lato, and Space Mono files under assets/metrakron/font and their
+   generated bitmap atlases are separately licensed under the SIL Open Font
+   License 1.1. See THIRD_PARTY_NOTICES.md for attribution and
+   LICENSES/OFL-1.1.txt (Cinzel), LICENSES/Lato-OFL.txt (Lato), and
+   LICENSES/SpaceMono-OFL.txt (Space Mono) for the full licences.
 
 4. Gradle wrapper
 
