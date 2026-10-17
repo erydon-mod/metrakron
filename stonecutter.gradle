@@ -229,6 +229,8 @@ tasks.register('checkAdapters') {
     dependsOn supportedMinecraftVersions.collect { ":${it}:test" }
 }
 
+apply from: 'gradle/audit-validation.gradle'
+
 // Loom development clients use readable Minecraft names, while published Fabric
 // adapters use production names. These small, generated-only wrappers let the
 // finished nested-JAR layout run in an isolated Loom client without modifying the

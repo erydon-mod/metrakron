@@ -121,6 +121,12 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(message)
 
 
+def require_classless_outer(bundle: zipfile.ZipFile) -> None:
+    # Adapter classes are inside nested JAR bytes, never loose outer ZIP entries.
+    classes = sorted(name for name in bundle.namelist() if name.endswith(".class"))
+    require(not classes, "The classless outer bundle unexpectedly contains classes: " + ", ".join(classes))
+
+
 def json_entry(archive: zipfile.ZipFile, name: str) -> dict:
     return json.loads(archive.read(name).decode("utf-8"))
 
@@ -219,10 +225,7 @@ def audit(bundle_path: Path, expected_version: str | None = None) -> dict:
             all(info.date_time == FIXED_ZIP_TIME for info in bundle.infolist()),
             "Bundle contains non-deterministic ZIP timestamps",
         )
-        require(
-            not any(name.endswith(".class") and not name.startswith("META-INF/jars/") for name in names),
-            "The classless outer bundle unexpectedly contains classes",
-        )
+        require_classless_outer(bundle)
         missing_legal = sorted(REQUIRED_LEGAL_ENTRIES - set(names))
         require(not missing_legal, f"Outer bundle is missing: {', '.join(missing_legal)}")
         resource_root = Path(__file__).resolve().parents[1] / "src/client/resources"

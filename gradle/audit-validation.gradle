@@ -1,0 +1,13 @@
+// Exercise the production classless-bundle guard without creating any JAR files.
+def auditPythonExecutable = providers.gradleProperty('metrakron.python')
+        .orElse(providers.environmentVariable('PYTHON'))
+        .getOrElse(System.getProperty('os.name', '').startsWith('Windows') ? 'python' : 'python3')
+
+tasks.register('testUniversalAudit', Exec) {
+    group = 'verification'
+    description = 'Checks classless outer-bundle rejection using only in-memory ZIP fixtures.'
+    commandLine auditPythonExecutable, '-B', '-m', 'unittest', 'tools/test_audit_universal.py', '-v'
+}
+tasks.named('checkAdapters') {
+    dependsOn tasks.named('testUniversalAudit')
+}
