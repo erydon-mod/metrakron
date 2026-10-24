@@ -142,8 +142,8 @@ public final class AppearanceScreen extends Screen {
             BitmapCinzelFont.initialize(client);
             //?}
         }
-        BitmapCinzelFont.drawMenuLabel(context, title.getString(), width / 2 + (header == 0 ? 8 : 0),
-                top + header + 8, layout.controlWidth() - (header == 0 ? 32 : 0), 14, .23F, 0xFF1F1F1F);
+        BitmapCinzelFont.drawMenuLabel(context, title.getString(), layout.titleCenterX(),
+                layout.titleCenterY(), layout.titleWidth(), 14, .23F, 0xFF1F1F1F);
         // Render controls only here. The registered native widgets still handle
         // clicks, keyboard focus and narration, but their default render pass
         // would also draw vanilla labels beneath our custom lettering.

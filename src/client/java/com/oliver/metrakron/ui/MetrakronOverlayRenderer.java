@@ -146,7 +146,7 @@ public final class MetrakronOverlayRenderer {
                 true
         );
 
-        BitmapCinzelFont.drawCentered(
+        BitmapCinzelFont.drawTimerCentered(
                 context,
                 OverlayClock.displayedTime(snapshot.elapsedMillis(), snapshot.averageMillis()),
                 centerX,

@@ -28,4 +28,18 @@ class AppearanceLayoutTest {
         assertTrue(layout.showPreview());
         assertFalse(AppearanceLayout.fit(240, 200).showPreview());
     }
+
+    @Test void titleSharesThePreviewCentreAndClearsTheCompactEmblem() {
+        for (int width : new int[]{180, 181, 240, 258, 320, 854}) {
+            for (int height : new int[]{160, 240, 296, 480}) {
+                var layout = AppearanceLayout.fit(width, height);
+                assertEquals(layout.controlX() + layout.controlWidth() / 2, layout.titleCenterX());
+                assertEquals(layout.top() + layout.header() + 8, layout.titleCenterY());
+                if (layout.header() == 0) {
+                    int emblemRight = layout.controlX() + 16;
+                    assertTrue(layout.titleCenterX() - layout.titleWidth() / 2 >= emblemRight + 4);
+                }
+            }
+        }
+    }
 }

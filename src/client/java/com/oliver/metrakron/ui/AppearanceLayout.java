@@ -17,4 +17,7 @@ record AppearanceLayout(int top, int header, int controlX, int controlWidth, int
     int panelWidth() { return controlWidth + 16; }
     int panelHeight() { return (showPreview ? 233 : 148) + header; }
     int footerWidth() { return (controlWidth - 12) / 3; }
+    int titleCenterX() { return controlX + controlWidth / 2; }
+    int titleCenterY() { return top + header + 8; }
+    int titleWidth() { return Math.max(1, controlWidth - (header == 0 ? 40 : 0)); }
 }
