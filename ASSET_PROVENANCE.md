@@ -14,6 +14,13 @@ it is not an enlargement of the former 256x76 runtime frames.
 Cinzel lettering is a rendered image, under the same OFL font attribution as
 the existing Cinzel assets. Oliver-owned branding remains CC BY-SA 4.0.
 
+The compact menu emblem is an exact copy of the approved 64x2560 integration
+sheet, containing 40 transparent 64x64 frames at 20 fps. The custom GUI selects
+each frame and uses smooth filtering; its texture metadata deliberately has no
+second animation controller. The README banner is an exact copy of the approved
+480x143 animated full-logo GIF, kept in documentation rather than runtime
+resources. Both exports share the existing branding provenance and licences.
+
 The Portorium control background and replacement `portorium_panel.png` use the
 approved owned Portoro photograph, resampled to 1024x1024. They are an exception
 to the unresized gallery crops below and must be retained when regenerating those

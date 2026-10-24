@@ -26,6 +26,11 @@ jobs:
           java-version: '25'
           cache: gradle
 
+      - name: Set up Python for source branding checks
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+
       - name: Compile and test every supported adapter
         run: |
           chmod +x gradlew

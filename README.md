@@ -1,5 +1,7 @@
 # ERYDON Metrakron
 
+![Animated ERYDON Metrakron logo](docs/branding/metrakron-logo.gif)
+
 ERYDON Metrakron is a client-side Fabric mod that shows an honest,
 self-measured loading clock. One universal JAR contains a small, tested adapter
 for each supported Minecraft version; Fabric selects the one exact match and
@@ -137,6 +139,7 @@ The appearance screen uses matching Portorium controls. Both the independent
 window and the in-game fallback animate the logo; saved appearance choices are
 preserved. A pre-baked Cinzel atlas makes the text available before Minecraft's
 own fonts. The reflection loop is presentation only and never affects timing.
+The compact appearance-screen header uses a square animated emblem.
 Animation frames are 512x152 pixels, downsampled from the lossless marketing
 master; the settings menu and loading panel reuse the same texture. The desktop
 helper starts with a 16 MiB Java heap and permits growth to 128 MiB for the

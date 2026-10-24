@@ -33,12 +33,15 @@ import net.minecraft.client.texture.NativeImageBackedTexture;
 
 /** Cached branding for menus and the early loading display. */
 final class PortoriumLogo {
-    private static final Identifier EMBLEM = id("icon.png");
+    private static final Identifier MENU_EMBLEM = id("dynamic/portorium_emblem");
     private static final Identifier EARLY_LOGO = id("dynamic/portorium_logo");
     private static boolean logoReady;
+    private static boolean emblemReady;
     private static boolean logoFailureLogged;
     private static int attempts;
+    private static int emblemAttempts;
     private static long retryAt;
+    private static long emblemRetryAt;
 
     private PortoriumLogo() { }
 
@@ -78,8 +81,18 @@ final class PortoriumLogo {
             // decoded copy of the enlarged animation for the settings menu.
             drawLoading(context, centerX, top + 1, 182);
         } else {
-            PortoriumSurfaces.texture(context, EMBLEM, centerX - 106, top + 1,
-                    14, 14, 0, 0, 512, 512, 512, 512);
+            long now = System.nanoTime();
+            if (!emblemReady && now >= emblemRetryAt && emblemAttempts < 5) {
+                emblemAttempts++;
+                emblemRetryAt = now + 1_000_000_000L;
+                emblemReady = loadTexture(MENU_EMBLEM, EmblemAnimation.RESOURCE);
+            }
+            if (emblemReady) {
+                PortoriumSurfaces.texture(context, MENU_EMBLEM, centerX - 106, top + 1,
+                        14, 14, 0, EmblemAnimation.frame(now) * EmblemAnimation.FRAME_SIZE,
+                        EmblemAnimation.FRAME_SIZE, EmblemAnimation.FRAME_SIZE,
+                        EmblemAnimation.FRAME_SIZE, EmblemAnimation.FRAME_SIZE * EmblemAnimation.FRAMES);
+            }
         }
     }
     static void drawLoading(
@@ -142,7 +155,7 @@ final class PortoriumLogo {
         } catch (IOException | RuntimeException exception) {
             if (!logoFailureLogged) {
                 logoFailureLogged = true;
-                MetrakronClient.LOGGER.error("Unable to load the early branding atlas", exception);
+                MetrakronClient.LOGGER.error("Unable to load branding resource {}", resource, exception);
             }
             return false;
         } finally {

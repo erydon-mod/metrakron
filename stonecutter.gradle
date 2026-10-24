@@ -373,3 +373,5 @@ gradle.projectsEvaluated {
         }
     }
 }
+
+apply from: 'gradle/branding-validation.gradle'

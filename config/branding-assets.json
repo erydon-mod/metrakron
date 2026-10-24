@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "project": "ERYDON Metrakron",
+  "assets": [
+    {
+      "path": "docs/branding/metrakron-logo.gif",
+      "role": "readme_logo",
+      "sha256": "c753aadbc097ac43679211ce496422f0e6505ffa1901771ca070af9103317855",
+      "bytes": 2698350,
+      "size": [
+        480,
+        143
+      ],
+      "frames": 174,
+      "readme": "README.md"
+    },
+    {
+      "path": "src/client/resources/assets/metrakron/icon.png",
+      "role": "static_icon",
+      "sha256": "343481c221b8dd9a9724d1cf87b5c0602245ce25883c52ee228e2618bccfcee0",
+      "bytes": 227309,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "src/client/resources/assets/metrakron/textures/gui/portorium_logo.png",
+      "role": "gui_logo",
+      "sha256": "0f1d0341a17757cf939b89683ad1e0a8fdc995e43f96e804dbd3f401d28211bd",
+      "bytes": 13922739,
+      "size": [
+        4096,
+        3344
+      ],
+      "frames": 174,
+      "frame_size": [
+        512,
+        152
+      ]
+    },
+    {
+      "path": "src/client/resources/assets/metrakron/textures/gui/portorium_emblem.png",
+      "role": "gui_emblem",
+      "sha256": "93143a8109c1269020df1e53f913a9ef1877cd189016f0ff4d9ba23572312a0b",
+      "bytes": 219492,
+      "size": [
+        64,
+        2560
+      ],
+      "frames": 40,
+      "frame_size": [
+        64,
+        64
+      ]
+    }
+  ],
+  "runtime_roots": [
+    "src/client/resources/assets"
+  ],
+  "references": [
+    {
+      "path": "src/client/resources/fabric.mod.json",
+      "pointer": [
+        "icon"
+      ],
+      "equals": "assets/metrakron/icon.png"
+    },
+    {
+      "path": "src/client/java/com/oliver/metrakron/ui/EmblemAnimation.java",
+      "pattern": "textures/gui/portorium_emblem\\.png"
+    },
+    {
+      "path": "src/client/java/com/oliver/metrakron/ui/EmblemAnimation.java",
+      "pattern": "FRAME_SIZE\\s*=\\s*64\\b"
+    },
+    {
+      "path": "src/client/java/com/oliver/metrakron/ui/EmblemAnimation.java",
+      "pattern": "FRAMES\\s*=\\s*40\\b"
+    },
+    {
+      "path": "src/client/java/com/oliver/metrakron/ui/EmblemAnimation.java",
+      "pattern": "FRAME_NANOS\\s*=\\s*50_000_000L"
+    },
+    {
+      "path": "src/client/java/com/oliver/metrakron/overlay/LogoAnimation.java",
+      "pattern": "textures/gui/portorium_logo\\.png"
+    },
+    {
+      "path": "src/client/java/com/oliver/metrakron/overlay/LogoAnimation.java",
+      "pattern": "FRAME_WIDTH\\s*=\\s*512\\b"
+    },
+    {
+      "path": "src/client/java/com/oliver/metrakron/overlay/LogoAnimation.java",
+      "pattern": "FRAME_HEIGHT\\s*=\\s*152\\b"
+    },
+    {
+      "path": "src/client/java/com/oliver/metrakron/overlay/LogoAnimation.java",
+      "pattern": "FRAMES\\s*=\\s*174\\b"
+    },
+    {
+      "path": "src/client/java/com/oliver/metrakron/overlay/LogoAnimation.java",
+      "pattern": "FRAME_NANOS\\s*=\\s*50_000_000L"
+    },
+    {
+      "path": "src/client/java/com/oliver/metrakron/ui/PortoriumLogo.java",
+      "pattern": "EmblemAnimation\\.frame\\("
+    }
+  ],
+  "forbidden": []
+}
