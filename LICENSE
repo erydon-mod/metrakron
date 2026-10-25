@@ -1,50 +1,87 @@
-ERYDON METRAKRON LICENCE MAP
+OLIVER'S MINECRAFT MODS RESTRICTED LICENSE 1.0
 
-Copyright (c) 2026 Oliver
+Copyright (c) 2026 Oliver. All rights reserved.
 
-1. Code
+This is a proprietary licence. It is not an open-source licence.
 
-   ERYDON Metrakron Java, Gradle, configuration, test, and documentation code
-   is licensed under the MIT License below.
+1. Scope
 
-2. ERYDON-owned visual assets
+"Software" means the code, original assets, documentation, and release files
+distributed with this licence, but only to the extent that Oliver owns the
+applicable copyright or other rights.
 
-   ERYDON-owned imagery under assets/metrakron includes all 27 stone
-   backgrounds, the Portorium logo and emblem, control artwork, and bronze and
-   silver textures and frames. These assets are licensed under Creative Commons
-   Attribution-ShareAlike 4.0 International. See ASSET_PROVENANCE.md and
-   BRANDING.md for their sources and LICENSES/CC-BY-SA-4.0.txt for the legal
-   text. Font files and generated font atlases are covered separately below.
+"Product name" means the name shown in the Software's included mod or pack
+metadata.
 
-3. Cinzel, Lato, and Space Mono
+Material that Oliver does not own is not covered by this licence. If an
+official source or release distribution includes separately licensed material,
+the applicable terms are identified in its own licence or attribution notice.
+This safeguard does not mean that any particular optional component is included.
 
-   The Cinzel, Lato, and Space Mono files under assets/metrakron/font and their
-   generated bitmap atlases are separately licensed under the SIL Open Font
-   License 1.1. See THIRD_PARTY_NOTICES.md for attribution and
-   LICENSES/OFL-1.1.txt (Cinzel), LICENSES/Lato-OFL.txt (Lato), and
-   LICENSES/SpaceMono-OFL.txt (Space Mono) for the full licences.
+2. Permission to use
 
-4. Gradle wrapper
+You may download, install, and run an unmodified official release of the
+Software for personal, non-commercial use.
 
-   The Gradle wrapper retains the Gradle distribution licence in
-   LICENSES/Gradle-9.5.1-LICENSE.txt.
+You may show gameplay, screenshots, reviews, or videos made using an
+unmodified official release. Where the use is public, provide reasonable
+attribution in the description, credits, or another clearly associated place:
 
-MIT License
+    <Product name> by Oliver - https://erydon.co.uk
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Private play does not require a public attribution notice. Ordinary game
+configuration and the use of separate compatible mods or resource packs do
+not modify the Software.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+3. Free modpacks
+
+You may include an exact, unmodified official release of the Software in a
+modpack only when all of the following are true:
+
+- the modpack is free to download and use;
+- no payment, subscription, donation, or paid early access is required to
+  obtain the Software;
+- this licence and any separate licence or attribution notices remain intact;
+- the modpack credits the product as described in section 2; and
+- the modpack links to an official distribution page when reasonably possible.
+
+This permission does not allow a standalone mirror or re-host of the Software.
+
+4. Prohibited uses
+
+Without Oliver's prior written permission, you may not:
+
+- sell, rent, sublicense, or charge for the Software or access to it;
+- bundle the Software with any paid product, service, download, or paid early
+  access offering;
+- modify, adapt, translate, decompile, reverse engineer, or create derivative
+  works from the Software, except where applicable law does not permit that
+  restriction;
+- distribute a modified version or derivative work;
+- copy code, textures, models, audio, branding, or other assets into another
+  project; or
+- remove or obscure copyright, attribution, or licence notices.
+
+Monetised gameplay videos and livestreams are not treated as a sale of the
+Software, provided they do not distribute the Software or its assets and the
+public attribution requirement in section 2 is followed.
+
+5. Additional permission
+
+Any use not expressly permitted above requires Oliver's prior written
+permission. Permission for one person, project, or release does not grant the
+same permission to anyone else.
+
+6. Termination
+
+Your permission under this licence ends automatically if you breach its terms.
+If you stop the breach and remove every unauthorised copy within 30 days of
+becoming aware of it, Oliver may choose to reinstate permission in writing.
+
+7. No warranty
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, AND NON-INFRINGEMENT. TO THE MAXIMUM EXTENT PERMITTED BY LAW, OLIVER
+WILL NOT BE LIABLE FOR ANY CLAIM, LOSS, OR DAMAGE ARISING FROM THE SOFTWARE OR
+ITS USE.

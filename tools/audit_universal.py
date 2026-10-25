@@ -42,6 +42,8 @@ EXPECTED_CONTACT = {
 }
 REQUIRED_LEGAL_ENTRIES = {
     "LICENSE",
+    "LICENSING.md",
+    "LICENSES/MIT-Previously-Granted.txt",
     "LICENSES/CC-BY-SA-4.0.txt",
     "LICENSES/OFL-1.1.txt",
     "LICENSES/Lato-OFL.txt",

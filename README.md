@@ -145,6 +145,18 @@ master; the settings menu and loading panel reuse the same texture. The desktop
 helper starts with a 16 MiB Java heap and permits growth to 128 MiB for the
 higher-resolution animation.
 
+## Licence
+
+The current primary licence for Oliver-owned code, assets and documentation is
+Oliver's Minecraft Mods Restricted License 1.0 (`LicenseRef-Oliver-Restricted-1.0`).
+See [LICENSE](LICENSE) for the permitted personal use, free modpack inclusion
+and other conditions. This is a proprietary licence.
+
+Earlier MIT and CC BY-SA 4.0 grants remain intact for material already supplied
+under those terms. [LICENSING.md](LICENSING.md) explains that boundary and links
+the retained licence texts. Fonts and other third-party material keep their own
+terms in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Build and test
 
 Open this folder as a Gradle project in IntelliJ IDEA. Gradle itself requires a

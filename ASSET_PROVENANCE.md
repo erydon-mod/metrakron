@@ -12,7 +12,9 @@ preserves transparency and samples the 24-fps master at the existing 20-fps
 runtime cadence: 174 frames, 8.7 seconds. The intermediate atlas is 4096x3344;
 it is not an enlargement of the former 256x76 runtime frames.
 Cinzel lettering is a rendered image, under the same OFL font attribution as
-the existing Cinzel assets. Oliver-owned branding remains CC BY-SA 4.0.
+the existing Cinzel assets. The current primary terms for Oliver-owned branding
+are in `LICENSE`; earlier CC BY-SA 4.0 grants remain intact as explained in
+`LICENSING.md`.
 
 The compact menu emblem is an exact copy of the approved 64x2560 integration
 sheet, containing 40 transparent 64x64 frames at 20 fps. The custom GUI selects
@@ -27,11 +29,12 @@ to the unresized gallery crops below and must be retained when regenerating thos
 crops. The transparent `portorium_control_frame.png` is the authored ERYDON
 control chamfer and recessed polished bronze inlay; the silver variant applies
 the shared silver palette while preserving its alpha and geometry. Both loading
-renderers and the appearance panel reuse this frame. These assets remain
-CC BY-SA 4.0.
+renderers and the appearance panel reuse this frame. Current terms and preserved
+earlier grants for these assets are explained in `LICENSING.md`.
 
 Appearance choices include all 27 ERYDON gallery stones, using centre crops of
-Oliver's full-size stone masters under CC BY-SA 4.0. The complete source-to-output
+Oliver's full-size stone masters. Current terms and preserved earlier CC BY-SA
+4.0 grants are explained in `LICENSING.md`. The complete source-to-output
 mapping is recorded in `tools/import_stone_panels.ps1`. Most panels are 960x384,
 except Striatus (676x270), whose supplied master is 676x676.
 These gallery crops preserve exact source pixels, without resizing, tinting, or embedded
@@ -67,5 +70,6 @@ The generated `textures/gui/cinzel_atlas.png` is a deterministic rasterization
 of that TTF for the early splash screen. The generated high-resolution
 `textures/gui/cinzel_timer_atlas.png` contains only timer characters and avoids
 platform TrueType overlap differences in the independent desktop renderer. The
-ERYDON-owned nerium and bronze textures remain CC BY-SA 4.0. Cinzel's exact
+ERYDON-owned nerium and bronze textures retain their earlier CC BY-SA 4.0 grants;
+see `LICENSING.md` for their current and historical terms. Cinzel's exact
 third-party notice is in `THIRD_PARTY_NOTICES.md`.
